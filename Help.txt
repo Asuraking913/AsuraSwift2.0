@@ -1,0 +1,20 @@
+AsuraSwift 1.0 User Guide
+
+For the Sender:
+
+Ensure a third device (e.g., phone with a hotspot) is available.
+Both computers connect to the same hotspot.
+In the app, set the IP address and port on both computers to match the hotspot's values.
+The IP address and port should be that of the device creating the hotspot.
+Select the file to send and initiate the transfer.
+Note: Receiver must click "Receive" before the sender clicks "send"
+
+For the Receiver:
+
+Set the IP address and port to match the sender's values.
+Optionally adjust the speed (buffer) for large files, but avoid unnecessary increases.
+Click "Ready" and wait for the color indicator to turn green.
+The sender can now press "Send" to initiate the transfer.
+Note: Avoid excessive speed increases to prevent system glitches.
+
+This guide facilitates seamless file transfer without relying on internet or data connections.

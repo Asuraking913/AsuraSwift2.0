@@ -1,0 +1,10 @@
+AsuraSwift 1.0 Information
+
+Developed by AsuraKing913 (Israel Shedrack)
+
+AsuraSwift 1.0 is a graphical user interface (GUI) application crafted by AsuraKing913, an aspiring coder with ambitions to reach god-level proficiency in the tech realm. The app is currently in its prototype phase, acknowledging the possibility of errors or bugs during operation.
+
+Contact for Feedback:
+
+Email: Israelshedrack913@gmail.com
+Users are encouraged to provide valuable feedback in the event of encountering any issues with the application. Your input is instrumental in enhancing the performance and reliability of AsuraSwift 1.0.
