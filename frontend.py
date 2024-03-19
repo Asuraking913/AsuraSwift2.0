@@ -1,7 +1,6 @@
 import PySimpleGUI as sg
 from pathlib import Path
 import os
-
 from random import choice
 from os import listdir
 import socket
@@ -18,6 +17,8 @@ spin_values = [
 
 
 
+
+#functions
 def recv_file(buffer, host, port):
     
     #socket object
@@ -72,9 +73,9 @@ def recv_file(buffer, host, port):
             done = True
     
 
-    client.close()
-    server.close()
-    print(end_message)
+    # client.close()
+    # server.close()
+    # print(end_message)
 
 
 def send_file(connmessage, filename, lastmessage, host, port):
@@ -119,7 +120,17 @@ def send_file(connmessage, filename, lastmessage, host, port):
 
 
     client.close()
-    
+
+
+#detect folder function 
+def detect_funct(file):
+    if '.' == file[-2] or '.' == file[-3] or '.' == file[-4]: 
+        # print('this is a file', file)
+        return True
+    else:
+        # print('this is a folder', file)
+        return False
+
 
 def create_window(theme):
     sg.theme(theme)
@@ -138,6 +149,7 @@ def create_window(theme):
       	[sg.Text('Speed(buffer): ', font=font_family1, pad=(10, 40), visible=False, key='key-buffer'), sg.Input('2mb/s', key='key-buffer_input', pad=(0, 40),  visible=False, font=font_family2, disabled=True)],
         [sg.Button('Ready', key='key-ready', visible=False)],
       	[sg.Input('File_name',  visible=False, size=(10, 30), font=font_family2, key='key-file_input', disabled=True, text_color='black'), sg.Button('Select_file',  visible=False, font='Arial 16 bold', key='key-file')],
+      	[sg.Input('Folder_name',  visible=False, size=(10, 30), font=font_family2, key='key-folder_input', disabled=True, text_color='black'), sg.Button('Select_folder',  visible=False, font='Arial 16 bold', key='key-folder')],
       	[sg.VPush()], 
         [sg.Text('sdfsdf', key='key-progress', text_color="red")],
       	[sg.Button('SEND', key='key-send', font='Arial 16 bold'), sg.Push(), sg.Button('RECEIVE', key='key-recv', font='Arial 16 bold')]
@@ -153,6 +165,7 @@ recv = False
 ready_recv = False
 ready_send = False
 ready_send2 = False
+folder_set = False
 
 
 while True:
@@ -209,6 +222,8 @@ Users are encouraged to provide valuable feedback in the event of encountering a
     #updating send changes: opening file path
     if send:
         if event == 'key-file':
+            window['key-folder'].update(visible = False)
+            window['key-folder_input'].update(visible = False)
             file = sg.popup_get_file('Select file', no_window=True)
             file = file
             try:
@@ -230,6 +245,24 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             window['key-file_input'].update(str(file_name).split('/')[-1])
 
 
+    #folder send changes
+    if event == 'key-folder':
+        conn_message = "Connection Initiated"
+        end_message = "Connection Terminated"
+        window['key-file'].update(visible = False)
+        window['key-file_input'].update(visible = False)
+        folder = sg.popup_get_folder("Select folder", no_window=True)
+        folder_list = listdir(folder)
+        print(folder)
+        # for n in folder_list:
+        #     if detect_funct(n):
+        #         send_file(conn_message, str(n), end_message, str(value['key-ip_input']), int(value['key-port_input']))
+        #     else:
+        #         pass
+        #         # print(n, 'folder')
+
+        # folder_set =  True
+        
                 
     
     #updating send changes
@@ -242,14 +275,14 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         window['key-port_input'].update(visible = True)
         window['key-file'].update(visible = True)
         window['key-file_input'].update(visible = True)
+        window['key-folder'].update(visible = True)
+        window['key-folder_input'].update(visible = True)
         window['key-recv'].update(visible = False)
 
         #running external scripts
         def exec_send_script():
             send_file(conn_message, str(file_name), end_message, str(value['key-ip_input']), int(value['key-port_input']))
         
-        
-
     if event == 'key-send' and ready_send == True:
          exec_send_script()
 
