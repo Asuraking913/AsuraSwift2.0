@@ -131,7 +131,6 @@ def detect_funct(file):
         # print('this is a folder', file)
         return False
 
-
 def create_window(theme):
     sg.theme(theme)
     font_family1 = 'TimesNewRoman 15 bold'
@@ -158,6 +157,8 @@ def create_window(theme):
 
     return sg.Window('AsuraSwift', layout, size=(350, 400), element_justification='center')
 
+
+#global Variable
 window = create_window(theme)
 reverse = False
 send = False
@@ -166,6 +167,8 @@ ready_recv = False
 ready_send = False
 ready_send2 = False
 folder_set = False
+file_list = []
+folder_list = []
 
 
 while True:
@@ -253,15 +256,17 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         window['key-file_input'].update(visible = False)
         folder = sg.popup_get_folder("Select folder", no_window=True)
         folder_list = listdir(folder)
-        print(folder)
-        # for n in folder_list:
-        #     if detect_funct(n):
-        #         send_file(conn_message, str(n), end_message, str(value['key-ip_input']), int(value['key-port_input']))
-        #     else:
-        #         pass
-        #         # print(n, 'folder')
-
-        # folder_set =  True
+        for files in folder_list:
+            if '.' == files[-2] or '.' == files[-3] or '.' == files[-4]: 
+            # print('this is a file', file)
+                file_list.append(files)
+            else:
+            # print('this is a folder', file)
+                folder_list.append(files)
+            print(file_list, "files")
+            print(folder_list, "folder")
+            break
+        folder_set =  True
         
                 
     
