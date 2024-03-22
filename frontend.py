@@ -121,15 +121,24 @@ def send_file(connmessage, filename, lastmessage, host, port):
 
     client.close()
 
-
 #detect folder function 
 def detect_funct(file):
-    if '.' == file[-2] or '.' == file[-3] or '.' == file[-4]: 
-        # print('this is a file', file)
-        return True
+    file_list = []
+    folder_list2 = []
+    if len(files) <= 4:
+        if files[-2] == '.' or files[-3] == '.' or files[-4] == '.':
+            file_list.append(files)
+            return [folder_list, file_list]
+        else:
+            folder_list2.append(files)
+            return [folder_list, file_list]
     else:
-        # print('this is a folder', file)
-        return False
+        if files[-2] == '.' or files[-3] == '.' or files[-4] == '.' or files[-5]: 
+            file_list.append(files)
+            return [folder_list, file_list]
+        else:
+            folder_list2.append(files)
+            return [folder_list, file_list]
 
 def create_window(theme):
     sg.theme(theme)
@@ -168,7 +177,8 @@ ready_send = False
 ready_send2 = False
 folder_set = False
 file_list = []
-folder_list = []
+folder_list2 = []
+
 
 
 while True:
@@ -257,15 +267,19 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         folder = sg.popup_get_folder("Select folder", no_window=True)
         folder_list = listdir(folder)
         for files in folder_list:
-            if '.' == files[-2] or '.' == files[-3] or '.' == files[-4]: 
-            # print('this is a file', file)
-                file_list.append(files)
+            if len(files) <= 4:
+                if files[-2] == '.' or files[-3] == '.' or files[-4] == '.':
+                    file_list.append(files)
+                else:
+                    folder_list2.append(files)
             else:
-            # print('this is a folder', file)
-                folder_list.append(files)
-            print(file_list, "files")
-            print(folder_list, "folder")
-            break
+                if files[-2] == '.' or files[-3] == '.' or files[-4] == '.' or files[-5]: 
+                    file_list.append(files)
+                else:
+                    folder_list2.append(files)
+            print(file_list, 'file')
+            print(folder_list2, 'folder')
+            
         folder_set =  True
         
                 
@@ -365,3 +379,25 @@ Users are encouraged to provide valuable feedback in the event of encountering a
 
 
 window.close()
+
+
+# import os
+# import PySimpleGUI as sg
+
+# folder = sg.popup_get_folder("Select folder", no_window=True)
+# file_list = []
+# folder_list = []
+
+# if folder:  # Check if a folder is selected
+#     for item in os.listdir(folder):
+#         if os.path.isfile(os.path.join(folder, item)):
+#             # Add files to file_list
+#             file_list.append(item)
+#         elif os.path.isdir(os.path.join(folder, item)):
+#             # Add folders to folder_list
+#             folder_list.append(item)
+
+# print("Files:")
+# print(file_list)
+# print("Folders:")
+# print(folder_list)
