@@ -5,6 +5,7 @@ from random import choice
 from os import listdir
 import socket
 import tqdm
+import shutil
 
 theme = choice(['DarkPurple6', 'TanBlue', 'DarkGreen', 'BlueMono', 'DarkBlue17', 'DarkBlue3', 'lightGreen'])
 
@@ -120,25 +121,6 @@ def send_file(connmessage, filename, lastmessage, host, port):
 
 
     client.close()
-
-#detect folder function 
-def detect_funct(file):
-    file_list = []
-    folder_list2 = []
-    if len(files) <= 4:
-        if files[-2] == '.' or files[-3] == '.' or files[-4] == '.':
-            file_list.append(files)
-            return [folder_list, file_list]
-        else:
-            folder_list2.append(files)
-            return [folder_list, file_list]
-    else:
-        if files[-2] == '.' or files[-3] == '.' or files[-4] == '.' or files[-5]: 
-            file_list.append(files)
-            return [folder_list, file_list]
-        else:
-            folder_list2.append(files)
-            return [folder_list, file_list]
 
 def create_window(theme):
     sg.theme(theme)
@@ -266,23 +248,10 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         window['key-file_input'].update(visible = False)
         folder = sg.popup_get_folder("Select folder", no_window=True)
         folder_list = listdir(folder)
-        for files in folder_list:
-            if len(files) <= 4:
-                if files[-2] == '.' or files[-3] == '.' or files[-4] == '.':
-                    file_list.append(files)
-                else:
-                    folder_list2.append(files)
-            else:
-                if files[-2] == '.' or files[-3] == '.' or files[-4] == '.' or files[-5]: 
-                    file_list.append(files)
-                else:
-                    folder_list2.append(files)
-            print(file_list, 'file')
-            print(folder_list2, 'folder')
-            
-        folder_set =  True
-        
-                
+        contents = os.walk(folder)
+        print(list(contents))
+
+    
     
     #updating send changes
     if event == 'key-send' and reverse == False:
