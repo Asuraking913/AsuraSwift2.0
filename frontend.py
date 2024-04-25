@@ -248,8 +248,9 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         window['key-file_input'].update(visible = False)
         folder = sg.popup_get_folder("Select folder", no_window=True)
         folder_list = listdir(folder)
-        contents = os.walk(folder)
-        print(list(contents))
+        dir_list = list(os.walk(folder))
+        # for dir
+        
 
     
     
