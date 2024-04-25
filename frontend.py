@@ -82,6 +82,8 @@ def recv_file(buffer, host, port):
 def send_file(connmessage, filename, lastmessage, host, port):
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    payload = 'Hey there, i am connected'
+    
     try:
         client.connect((host, port))
     except Exception as e:
@@ -240,16 +242,16 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             window['key-file_input'].update(str(file_name).split('/')[-1])
 
 
-    #folder send changes
-    if event == 'key-folder':
-        conn_message = "Connection Initiated"
-        end_message = "Connection Terminated"
-        window['key-file'].update(visible = False)
-        window['key-file_input'].update(visible = False)
-        folder = sg.popup_get_folder("Select folder", no_window=True)
-        folder_list = listdir(folder)
-        dir_list = list(os.walk(folder))
-        # for dir
+    # #folder send changes
+    # if event == 'key-folder':
+    #     conn_message = "Connection Initiated"
+    #     end_message = "Connection Terminated"
+    #     window['key-file'].update(visible = False)
+    #     window['key-file_input'].update(visible = False)
+    #     folder = sg.popup_get_folder("Select folder", no_window=True)
+    #     folder_list = listdir(folder)
+    #     dir_list = list(os.walk(folder))
+    #     # for dir
         
 
     
