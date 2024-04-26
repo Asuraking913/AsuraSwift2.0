@@ -6,6 +6,8 @@ from os import listdir
 import socket
 import tqdm
 import shutil
+import client
+import server
 
 theme = choice(['DarkPurple6', 'TanBlue', 'DarkGreen', 'BlueMono', 'DarkBlue17', 'DarkBlue3', 'lightGreen'])
 
@@ -81,9 +83,9 @@ def recv_file(buffer, host, port):
             done = True
     
 
-    # client.close()
-    # server.close()
-    # print(end_message)
+    client.close()
+    server.close()
+    print(end_message)
 
 
 def send_file(connmessage, filename, lastmessage, host, port):
@@ -252,20 +254,46 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             window['key-file_input'].update(str(file_name).split('/')[-1])
 
 
-    # #folder send changes
-    # if event == 'key-folder':
-    #     conn_message = "Connection Initiated"
-    #     end_message = "Connection Terminated"
-    #     window['key-file'].update(visible = False)
-    #     window['key-file_input'].update(visible = False)
-    #     folder = sg.popup_get_folder("Select folder", no_window=True)
-    #     folder_list = listdir(folder)
-    #     dir_list = list(os.walk(folder))
-    #     # for dir
-        
+    #folder send changes
+    if event == 'key-folder':
+        conn_message = "Connection Initiated"
+        end_message = "Connection Terminated"
+        window['key-file'].update(visible = False)
+        window['key-file_input'].update(visible = False)
+        folder = sg.popup_get_folder("Select folder", no_window=True)
+        folder_list = listdir(folder)
 
+        #defince file_sending_script
+        def exec_send_script2(filename):
+            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']))
+
+        def exec_recv_script(folder, subfolder):
+            server.recv_file(int(buffer), str(ip_addr), int(port), folder=folder, sub_folder=subfolder)
+
+        
+        dir_list = list(os.walk(folder))
+        for path, folders, filenames in dir_list:
+            # for files in filenames:
+            #     # filenames = f'{path}/{files}'
+            #     # exec_send_script2(filenames)
+            #     sub_folder = f'{path}/{folders}'
+            #     # exec_send_script2()
+            #     print(sub_folder)
+            for folder in folders:
+                print(f'{path}/{folder}')
     
-    
+
+    # with open(filename, 'rb') as file:
+    #     while True:
+    #         data = file.read(2000000)
+    #         if data:
+    #             try:
+    #                 client.sendall(data)
+    #                 progress.update(len(data))
+    #             except BrokenPipeError or ConnectionResetError:
+    #                 pass
+    #         else:
+    #             break
     #updating send changes
     if event == 'key-send' and reverse == False:
         reverse = True
