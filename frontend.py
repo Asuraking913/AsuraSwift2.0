@@ -118,14 +118,6 @@ def send_file(connmessage, filename, lastmessage, host, port):
     progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024,
                          total = int(filesize))
 
-    # with open(filename, 'rb') as file:
-        
-    #     data = file.read()
-    #     try:
-    #         client.sendall(data)
-    #     except BrokenPipeError:
-    #         pass
-
 
     with open(filename, 'rb') as file:
         while True:
