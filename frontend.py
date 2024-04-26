@@ -24,6 +24,8 @@ def recv_file(buffer, host, port):
     
     #socket object
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    response = "Received_handshake"
+
     try:
         server.bind((host, port))
     except Exception as e:
@@ -31,6 +33,11 @@ def recv_file(buffer, host, port):
     server.listen()
     
     client, addr = server.accept()
+
+    #hanshake
+    handshake = client.recv(10).decode()
+    print(handshake)
+    client.send("Received_handshake".encode())
 
     #split gen message
     gen_message = client.recv(1024).decode()
@@ -82,13 +89,24 @@ def recv_file(buffer, host, port):
 def send_file(connmessage, filename, lastmessage, host, port):
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    payload = 'Hey there, i am connected'
+    handshake = 'Hey server'
     
-    try:
-        client.connect((host, port))
-    except Exception as e:
-        pass
 
+    #Exchange handshake
+    while True:
+        try:
+            client.connect((host, port))
+            client.send(handshake.encode())
+            break
+        except Exception as e:
+            print("Waiting for Connection.")
+            print("Waiting for Connection..")
+            print("Waiting for Connection...")
+            print("Waiting for Connection....")
+            print("Waiting for Connection.....")
+    
+    reponse = client.recv(18).decode()
+    print(reponse)
         
     filesize = os.path.getsize(filename)
 
