@@ -70,7 +70,8 @@ def recv_file(buffer, host, port, folder=False, sub_folder= False):
         conn_message = gen_message[0]
         file_name = gen_message[1]
         file_size = gen_message[2]
-        end_message = gen_message[3]
+        end_message = gen_message[3] 
+        os.makedirs(file_name)
     
 
     client.close()

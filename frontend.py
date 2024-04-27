@@ -267,7 +267,7 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         def exec_send_script2(filename):
             client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']))
 
-        def exec_recv_script(folder, subfolder):
+        def exec_recv_script2(folder, subfolder):
             server.recv_file(int(buffer), str(ip_addr), int(port), folder=folder, sub_folder=subfolder)
 
         
@@ -280,7 +280,9 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             #     # exec_send_script2()
             #     print(sub_folder)
             for folder in folders:
-                print(f'{path}/{folder}')
+                # print(f'{path}/{folder}')
+                sub_folder = f'{path}/{folder}'
+                exec_recv_script2(folder=True, subfolder = True)
     
 
     # with open(filename, 'rb') as file:
