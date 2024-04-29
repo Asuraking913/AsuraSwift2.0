@@ -263,40 +263,20 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         folder = sg.popup_get_folder("Select folder", no_window=True)
         folder_list = listdir(folder)
 
-        #defince file_sending_script
-        def exec_send_script2(filename):
-            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']))
-
-        def exec_recv_script2(folder, subfolder):
-            server.recv_file(int(buffer), str(ip_addr), int(port), folder=folder, sub_folder=subfolder)
-
+        #define file_sending_script
+        def exec_send_script2(filename, Folder):
+            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), folder = Folder)
         
-        dir_list = list(os.walk(folder))
-        for path, folders, filenames in dir_list:
-            # for files in filenames:
-            #     # filenames = f'{path}/{files}'
-            #     # exec_send_script2(filenames)
-            #     sub_folder = f'{path}/{folders}'
-            #     # exec_send_script2()
-            #     print(sub_folder)
-            for folder in folders:
-                # print(f'{path}/{folder}')
-                sub_folder = f'{path}/{folder}'
-                exec_recv_script2(folder=True, subfolder = True)
-    
+        #Define dir transfer
+        def Render_root(root_folder):
+            dir_list = list(os.walk(root_folder))
+            for path, folders, filenames in dir_list:
+                for folder in folders:
+                    dir = f'{folder}' + '\n' + str(root_folder).split('/')[-1]
+                    exec_send_script2(dir, Folder='YES')
 
-    # with open(filename, 'rb') as file:
-    #     while True:
-    #         data = file.read(2000000)
-    #         if data:
-    #             try:
-    #                 client.sendall(data)
-    #                 progress.update(len(data))
-    #             except BrokenPipeError or ConnectionResetError:
-    #                 pass
-    #         else:
-    #             break
-    #updating send changes
+        Render_root(folder)
+
     if event == 'key-send' and reverse == False:
         reverse = True
         send = True
@@ -359,11 +339,15 @@ Users are encouraged to provide valuable feedback in the event of encountering a
 
         #creating server function
         def exec_recv_script():
-            return recv_file(int(buffer), str(ip_addr), int(port))
+            return server.recv_file(int(buffer), str(ip_addr), int(port))
+
+        def exec_recv_script2(folder):
+            server.recv_file(int(buffer), str(ip_addr), int(port), Folder = folder)
+
 
     #executing recv scripts
     if event == 'key-recv' and ready_recv:
-        exec_recv_script()
+        exec_recv_script2(folder = 'YES')
         window['key-ready'].update(button_color = 'Red')
 
     #Affirming ip_value

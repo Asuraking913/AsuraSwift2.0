@@ -2,7 +2,7 @@ import socket
 import os 
 import tqdm 
 
-def recv_file(buffer, host, port, folder=False, sub_folder= False):
+def recv_file(buffer, host, port, Folder = 'NO'):
     
     #socket object
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -19,17 +19,19 @@ def recv_file(buffer, host, port, folder=False, sub_folder= False):
     #hanshake
     handshake = client.recv(10).decode()
     print(handshake)
-    client.send("Received_handshake".encode())
+    # client.send(f"Received_handshakes".encode())
 
-    if folder == False:
+    def recv_file1():
+
         #split gen message
-        gen_message = client.recv(1024).decode()
-        gen_message = gen_message.split('\n')
+        gen_message1 = client.recv(1024).decode()
+        gen_message = gen_message1.split('\n')
+        print(gen_message)
 
         conn_message = gen_message[0]
         file_name = gen_message[1]
         file_name1 = file_name.split('/')[-1]
-        file_name = f'Received_{file_name}'
+        file_name1 = f'Received_{file_name1}'
         file_size = gen_message[2]
         end_message = gen_message[3]
 
@@ -40,8 +42,8 @@ def recv_file(buffer, host, port, folder=False, sub_folder= False):
         global progress
 
         progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024, 
-                        total = int(file_size))
-        
+                            total = int(file_size))
+            
         done = False
 
         with open(file_name1, 'wb') as file:
@@ -53,27 +55,31 @@ def recv_file(buffer, host, port, folder=False, sub_folder= False):
                     done = True
                 progress.update(len(data))
 
-        file = open(file_name, 'wb')
+        file = open(file_name1, 'wb')
 
-        while not done:
-            data = client.recv(buffer)
-            if data:
-                file.write(data)
-                progress.update(len(data))
-            else:
-                done = True
+        # while not done:
+        #     data = client.recv(buffer)
+        #     if data:
+        #         file.write(data)
+        #         progress.update(len(data))
+        #     else:
+        #         done = True
 
+        print(end_message)
+
+    def recv_folder_path():
+        gen_message1 = client.recv(1024).decode()
+        gen_message = gen_message1.split('\n')
+        root_folder = gen_message[-1]
+        print(root_folder)
+        current_dir = os.getcwd()
+        new_dir = os.makedirs(f'{current_dir}/{root_folder}/{gen_message[0]}')
+
+
+    if Folder == 'NO':
+        recv_file1()
     else:
-        gen_message = client.recv(1024).decode()
-        gen_message = gen_message.split('\n')
-
-        conn_message = gen_message[0]
-        file_name = gen_message[1]
-        file_size = gen_message[2]
-        end_message = gen_message[3] 
-        os.makedirs(file_name)
-    
+        recv_folder_path()
 
     client.close()
     server.close()
-    print(end_message)
