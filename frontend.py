@@ -272,8 +272,9 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             dir_list = list(os.walk(root_folder))
             for path, folders, filenames in dir_list:
                 for folder in folders:
-                    dir = f'{folder}' + '\n' + str(root_folder).split('/')[-1]
-                    exec_send_script2(dir, Folder='YES')
+                    dir = f'{folder}' + '\n' + str(path) + '\n' + str(root_folder).split('/')[-1]
+                    exec_send_script2(dir, Folder="YES")
+
 
         Render_root(folder)
 

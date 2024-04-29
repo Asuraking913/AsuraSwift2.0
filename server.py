@@ -71,9 +71,13 @@ def recv_file(buffer, host, port, Folder = 'NO'):
         gen_message1 = client.recv(1024).decode()
         gen_message = gen_message1.split('\n')
         root_folder = gen_message[-1]
-        print(root_folder)
+        path  = gen_message[1]
+        folder = gen_message[0]
         current_dir = os.getcwd()
-        new_dir = os.makedirs(f'{current_dir}/{root_folder}/{gen_message[0]}')
+
+        #remember to add destination folder with sg.popup()
+        new_root_dir = os.makedirs(f'{current_dir}/{root_folder}', exist_ok=True)
+        new_sub_dir = os.makedirs(f'{path}/{folder}', exist_ok=True)
 
 
     if Folder == 'NO':

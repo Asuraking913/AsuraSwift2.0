@@ -9,22 +9,6 @@ def send_files(conn_message, filename, end_message, host, port, folder ='No'):
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     handshake = 'Hey server'
-    
-    #Exchange handshake
-    while True:
-        try:
-            client.connect((host, port))
-            client.send(handshake.encode())
-            break
-        except Exception as e:
-            print("Waiting for Connection.")
-            print("Waiting for Connection..")
-            print("Waiting for Connection...")
-            print("Waiting for Connection....")
-            print("Waiting for Connection.....")
-    
-    # reponse = client.recv(19).decode()
-    # print(reponse)
 
     def send_file(filename_par):
         print(filename_par)
@@ -48,9 +32,6 @@ def send_files(conn_message, filename, end_message, host, port, folder ='No'):
                 else:
                     break
 
-
-
-
     def send_folder_path(filename1_par):
         print("Sending.")
         print("Sending..")
@@ -59,10 +40,27 @@ def send_files(conn_message, filename, end_message, host, port, folder ='No'):
             client.send((f"{filename1_par}").encode())
         except BrokenPipeError:
             pass
-    
-    if folder == 'NO':
-        send_file(filename)
-    else:
-        send_folder_path(filename)
+        except ConnectionResetError:
+            client.send((f"{filename1_par}").encode())
 
-    client.close()
+    
+    #Exchange handshake
+    while True:
+        try:
+            client.connect((host, port))
+            client.send(handshake.encode())
+            break
+        except Exception as e:
+            print("Waiting for Connection.")
+            print("Waiting for Connection..")
+            print("Waiting for Connection...")
+            print("Waiting for Connection....")
+            print("Waiting for Connection.....")
+
+    try:
+        if folder == 'NO':
+            send_file(filename)
+        else:
+            send_folder_path(filename)
+    finally:
+        client.close()
