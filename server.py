@@ -71,10 +71,11 @@ def recv_file(buffer, host, port, Folder = 'NO'):
     def recv_folder_path():
         gen_message = client.recv(1024).decode()
         gen_message = gen_message.split('\n')
-        # folder = gen_message[0]
-        # sub_paths = gen_message[1]
-        # root_folder = gen_message[-1]
-        print(gen_message)
+        folder = gen_message[0]
+        sub_paths = gen_message[1]
+        root_folder = gen_message[-1]
+        os.makedirs(f'{root_folder}', exist_ok=True)
+        os.makedirs(f'{sub_paths}/{folder}', exist_ok= True)
 
     if Folder == 'NO':
         recv_file1()
