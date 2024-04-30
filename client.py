@@ -38,8 +38,8 @@ def send_files(conn_message, filename, end_message, host, port, folder ='No'):
         print("Sending...")
         try:
             client.send((f"{filename1_par}").encode())
-        except Exception as e:
-            print(f"Error: {e}")
+        except BrokenPipeError:
+            pass
 
     
     #Exchange handshake
@@ -49,11 +49,11 @@ def send_files(conn_message, filename, end_message, host, port, folder ='No'):
             client.send(handshake.encode())
             break
         except Exception as e:
-            print("Waiting for Connection.")
-            print("Waiting for Connection..")
-            print("Waiting for Connection...")
-            print("Waiting for Connection....")
-            print("Waiting for Connection.....")
+            print(f"Waiting for Connection.    {e}")
+            print(f"Waiting for Connection..   {e}")
+            print(f"Waiting for Connection...  {e}")
+            print(f"Waiting for Connection.... {e}")
+            print(f"Waiting for Connection.....{e}")
 
     try:
         if folder == 'NO':

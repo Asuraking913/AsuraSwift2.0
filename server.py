@@ -1,5 +1,6 @@
 import socket
-import os 
+import os
+import time 
 import tqdm 
 
 def recv_file(buffer, host, port, Folder = 'NO'):
@@ -68,20 +69,14 @@ def recv_file(buffer, host, port, Folder = 'NO'):
         print(end_message)
 
     def recv_folder_path():
-        gen_message1 = client.recv(1024).decode()
-        gen_message = gen_message1.split('\n')
-        root_folder = gen_message[-1]
-        path  = gen_message[1]
-        folder = gen_message[0]
-        current_dir = os.getcwd()
-        print(folder)
+        gen_message = client.recv(1024).decode()
+        gen_message = gen_message.split('\n')
+        # folder = gen_message[0]
+        # sub_paths = gen_message[1]
+        # root_folder = gen_message[-1]
+        print(gen_message)
 
-        #remember to add destination folder with sg.popup()
-        os.makedirs(f'{current_dir}/{root_folder}', exist_ok=True)
-        os.makedirs(f'{root_folder}/{folder}', exist_ok=True)
-
-        
-        if Folder == 'NO':
-            recv_file1()
-        else:
-            recv_folder_path()
+    if Folder == 'NO':
+        recv_file1()
+    else:
+        recv_folder_path()

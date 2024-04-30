@@ -1,3 +1,4 @@
+import time
 import PySimpleGUI as sg
 from pathlib import Path
 import os
@@ -269,17 +270,20 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         
         #Define dir transfer
         def Render_root(root_folder):
+            def Render_origin_paths(folderX, path):
+                new_folder = folderX.split('/')[-1]
+                index = path.find(new_folder)
+                relative_path = path[index + len(new_folder):]
+                final_path = new_folder + relative_path
+                return final_path
+
             dir_list = list(os.walk(root_folder))
             for path, folders, filenames in dir_list:
                 for folder in folders:
-                    dir = f'{folder}' + '\n' + str(path) + '\n' + str(root_folder).split('/')[-1]
-                    # exec_send_script2(dir, Folder="YES")
-                    new_folder = root_folder.split('/')[-1]
-                    index = path.find(new_folder)
-                    relative_path = path[index + len(new_folder):]
-                    final_path = new_folder + relative_path
-                    print(final_path)
-
+                    sub_paths = Render_origin_paths(root_folder, path)
+                    dir = f'{folder}' + '\n' + str(sub_paths) + '\n' + str(root_folder).split('/')[-1]
+                    exec_send_script2(dir, Folder="YES")
+                    time.sleep(2)
 
 
         Render_root(folder)
