@@ -38,10 +38,8 @@ def send_files(conn_message, filename, end_message, host, port, folder ='No'):
         print("Sending...")
         try:
             client.send((f"{filename1_par}").encode())
-        except BrokenPipeError:
-            pass
-        except ConnectionResetError:
-            client.send((f"{filename1_par}").encode())
+        except Exception as e:
+            print(f"Error: {e}")
 
     
     #Exchange handshake

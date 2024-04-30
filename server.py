@@ -77,14 +77,11 @@ def recv_file(buffer, host, port, Folder = 'NO'):
         print(folder)
 
         #remember to add destination folder with sg.popup()
-        # new_root_dir = os.makedirs(f'{current_dir}/{root_folder}', exist_ok=True)
-        # new_sub_dir = os.makedirs(f'{path}/{folder}', exist_ok=True)
+        os.makedirs(f'{current_dir}/{root_folder}', exist_ok=True)
+        os.makedirs(f'{root_folder}/{folder}', exist_ok=True)
 
-
-    if Folder == 'NO':
-        recv_file1()
-    else:
-        recv_folder_path()
-
-    client.close()
-    server.close()
+        
+        if Folder == 'NO':
+            recv_file1()
+        else:
+            recv_folder_path()

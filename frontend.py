@@ -273,7 +273,13 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             for path, folders, filenames in dir_list:
                 for folder in folders:
                     dir = f'{folder}' + '\n' + str(path) + '\n' + str(root_folder).split('/')[-1]
-                    exec_send_script2(dir, Folder="YES")
+                    # exec_send_script2(dir, Folder="YES")
+                    new_folder = root_folder.split('/')[-1]
+                    index = path.find(new_folder)
+                    relative_path = path[index + len(new_folder):]
+                    final_path = new_folder + relative_path
+                    print(final_path)
+
 
 
         Render_root(folder)
