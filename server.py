@@ -72,7 +72,7 @@ def recv_file(buffer, host, port, Folder = 'NO', locate_folder = "NO"):
         folder = gen_message[0]
         sub_paths = gen_message[1]
         root_folder = gen_message[-1]
-        if locate_folder == "No":
+        if locate_folder == "NO":
             os.makedirs(f'{root_folder}', exist_ok=True)
             os.makedirs(f'{sub_paths}/{folder}', exist_ok= True)
         else:

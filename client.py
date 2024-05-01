@@ -5,7 +5,7 @@ import tqdm
 host = socket.gethostbyname(socket.gethostname())
 port = 9999
 
-def send_files(conn_message, filename, end_message, host, port, folder ='No'):
+def send_files(conn_message, filename, end_message, host, port, locate_folder, folder ='No'):
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     handshake = 'Hey server'
@@ -37,7 +37,7 @@ def send_files(conn_message, filename, end_message, host, port, folder ='No'):
         print("Sending..")
         print("Sending...")
         try:
-            client.send((f"{filename1_par}").encode())
+            client.send((f"{filename1_par}" + '\n' + locate_folder).encode())
         except BrokenPipeError:
             pass
 

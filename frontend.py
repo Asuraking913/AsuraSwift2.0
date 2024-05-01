@@ -177,6 +177,7 @@ ready_send2 = False
 folder_set = False
 file_list = []
 folder_list2 = []
+dest_folder = "NO"
 
 
 
@@ -228,7 +229,7 @@ AsuraSwift 1.0 is a graphical user interface (GUI) application crafted by AsuraK
 Contact for Feedback:
 
 Email: israelshedrack913@gmail.com
-Users are encouraged to provide valuable feedback in the event of encountering any issues with the application. Your input is instrumental in enhancing the performance and reliability of AsuraSwift 1.0.""", no_titlebar=True)
+Users are encouraged to provide valuable feedback in the event of encountering any issues with the application. Your input is instrumental in enhancing the performance and reliability of AsuraSwift.""", no_titlebar=True)
 
 
     #updating send changes: opening file path
@@ -267,8 +268,8 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         folder_list = listdir(folder)
 
         #define file_sending_script
-        def exec_send_script2(filename, Folder, location):
-            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), folder = Folder, locate_folder = location)
+        def exec_send_script2(filename, Folder):
+            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), folder = Folder)
         
         #Define dir transfer
         def Render_root(root_folder):
@@ -280,13 +281,15 @@ Users are encouraged to provide valuable feedback in the event of encountering a
                 return final_path
             def send_folder_paths():
                 sub_paths = Render_folder_paths(root_folder, path)
+                print(dest_folder)
                 dir = f'{folder}' + '\n' + str(sub_paths) + '\n' + str(root_folder).split('/')[-1]
-                # exec_send_script2(dir, Folder="YES", location=dest_folder)
+                exec_send_script2(dir, Folder="YES")
                 time.sleep(2)
             
             def Render_files():
                 file_name = file_path
-                # exec_send_script2(file_name, Folder = "NO", location = dest_folder)
+                print(dest_folder)
+                exec_send_script2(file_name, Folder = "NO")
 
             dir_list = list(os.walk(root_folder))
             for path, folders, filenames in dir_list:
@@ -340,7 +343,7 @@ Users are encouraged to provide valuable feedback in the event of encountering a
     
     if event == 'key-dest':
         dest_folder = sg.popup_get_folder('Select Destination Folder', no_window=True)
-        print(dest_folder)
+        window['key-dest_input'].update(dest_folder)
 
     #updating buffer value along with server parameters
     if event == 'key-ready' and reverse == True:
