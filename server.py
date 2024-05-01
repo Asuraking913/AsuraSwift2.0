@@ -3,7 +3,7 @@ import os
 import time 
 import tqdm 
 
-def recv_file(buffer, host, port, Folder = 'NO'):
+def recv_file(buffer, host, port, Folder = 'NO', locate_folder = "NO"):
     
     #socket object
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,7 +32,7 @@ def recv_file(buffer, host, port, Folder = 'NO'):
         conn_message = gen_message[0]
         file_name = gen_message[1]
         file_name1 = file_name.split('/')[-1]
-        file_name1 = f'Received_{file_name1}'
+        # file_name1 = f'Received_{file_name1}'
         file_size = gen_message[2]
         end_message = gen_message[3]
 
@@ -56,8 +56,6 @@ def recv_file(buffer, host, port, Folder = 'NO'):
                     done = True
                 progress.update(len(data))
 
-        file = open(file_name1, 'wb')
-
         # while not done:
         #     data = client.recv(buffer)
         #     if data:
@@ -74,8 +72,11 @@ def recv_file(buffer, host, port, Folder = 'NO'):
         folder = gen_message[0]
         sub_paths = gen_message[1]
         root_folder = gen_message[-1]
-        os.makedirs(f'{root_folder}', exist_ok=True)
-        os.makedirs(f'{sub_paths}/{folder}', exist_ok= True)
+        if locate_folder == "No":
+            os.makedirs(f'{root_folder}', exist_ok=True)
+            os.makedirs(f'{sub_paths}/{folder}', exist_ok= True)
+        else:
+            print(locate_folder)
 
     if Folder == 'NO':
         recv_file1()

@@ -1,3 +1,4 @@
+from pydoc import visiblename
 import time
 import PySimpleGUI as sg
 from pathlib import Path
@@ -156,12 +157,13 @@ def create_window(theme):
       	[sg.Input('File_name',  visible=False, size=(10, 30), font=font_family2, key='key-file_input', disabled=True, text_color='black'), sg.Button('Select_file',  visible=False, font='Arial 16 bold', key='key-file')],
       	[sg.Input('Folder_name',  visible=False, size=(10, 30), font=font_family2, key='key-folder_input', disabled=True, text_color='black'), sg.Button('Select_folder',  visible=False, font='Arial 16 bold', key='key-folder')],
       	[sg.VPush()], 
+        [sg.Input('Select Destination', visible = False, size = (20, 40), font=font_family2, key = 'key-dest_input', text_color='black', disabled=True), sg.Button('Location', visible = False, font = 'Arial 16 bold', key = 'key-dest')],
         [sg.Text('sdfsdf', key='key-progress', text_color="red")],
       	[sg.Button('SEND', key='key-send', font='Arial 16 bold'), sg.Push(), sg.Button('RECEIVE', key='key-recv', font='Arial 16 bold')]
     	]
 
 
-    return sg.Window('AsuraSwift', layout, size=(350, 400), element_justification='center')
+    return sg.Window('AsuraSwift', layout, size=(350, 450), element_justification='center')
 
 
 #global Variable
@@ -265,8 +267,8 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         folder_list = listdir(folder)
 
         #define file_sending_script
-        def exec_send_script2(filename, Folder):
-            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), folder = Folder)
+        def exec_send_script2(filename, Folder, location):
+            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), folder = Folder, locate_folder = location)
         
         #Define dir transfer
         def Render_root(root_folder):
@@ -279,17 +281,25 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             def send_folder_paths():
                 sub_paths = Render_folder_paths(root_folder, path)
                 dir = f'{folder}' + '\n' + str(sub_paths) + '\n' + str(root_folder).split('/')[-1]
-                exec_send_script2(dir, Folder="YES")
+                # exec_send_script2(dir, Folder="YES", location=dest_folder)
                 time.sleep(2)
+            
+            def Render_files():
+                file_name = file_path
+                # exec_send_script2(file_name, Folder = "NO", location = dest_folder)
 
             dir_list = list(os.walk(root_folder))
             for path, folders, filenames in dir_list:
 
-                #   Render_send_file_path
-                # for folder in folders:
-                #     # send_folder_paths()
-                for files in filenames:
-                    print(files, path)
+                # Render_send_folder_path
+                for folder in folders:
+                    send_folder_paths()
+
+                # #Render_folder_path
+                # for files in filenames:
+                #     file_path = f'{path}/{files}'
+                #     Render_files()
+                    
 
         Render_root(folder)
 
@@ -324,7 +334,13 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         window['key-buffer_input'].update(visible = True)
         window['key-ready'].update(visible = True)
         window['key-send'].update(visible = False)
+        window['key-dest'].update(visible = True)
+        window['key-dest_input'].update(visible = True)
         recv = True
+    
+    if event == 'key-dest':
+        dest_folder = sg.popup_get_folder('Select Destination Folder', no_window=True)
+        print(dest_folder)
 
     #updating buffer value along with server parameters
     if event == 'key-ready' and reverse == True:
