@@ -5,6 +5,7 @@ import tqdm
 
 def recv_file(buffer, host, port, Folder = 'NO', locate_folder = "NO"):
     
+    print(locate_folder)
     #socket object
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     response = "Received_handshake"
@@ -27,8 +28,6 @@ def recv_file(buffer, host, port, Folder = 'NO', locate_folder = "NO"):
         #split gen message
         gen_message1 = client.recv(1024).decode()
         gen_message = gen_message1.split('\n')
-        print(gen_message)
-
         conn_message = gen_message[0]
         file_name = gen_message[1]
         file_name1 = file_name.split('/')[-1]
@@ -37,7 +36,7 @@ def recv_file(buffer, host, port, Folder = 'NO', locate_folder = "NO"):
         end_message = gen_message[3]
 
         print(conn_message)
-        print(file_name1)
+        print(f"Created {file_name1} at {file_name}")
         print(file_size)
 
         global progress
@@ -47,7 +46,7 @@ def recv_file(buffer, host, port, Folder = 'NO', locate_folder = "NO"):
             
         done = False
 
-        with open(file_name1, 'wb') as file:
+        with open(file_name, 'wb') as file:
             while not done:
                 data = client.recv(buffer)
                 if data:
@@ -67,18 +66,27 @@ def recv_file(buffer, host, port, Folder = 'NO', locate_folder = "NO"):
         print(end_message)
 
     def recv_folder_path():
-        gen_message = client.recv(1024).decode()
-        gen_message = gen_message.split('\n')
-        folder = gen_message[0]
-        sub_paths = gen_message[1]
-        root_folder = gen_message[-1]
-        if locate_folder == "NO":
-            os.makedirs(f'{root_folder}', exist_ok=True)
-            os.makedirs(f'{sub_paths}/{folder}', exist_ok= True)
+        gen_message1 = client.recv(1024).decode()
+        if gen_message1 == "END":
+            return False
         else:
-            print(locate_folder)
+            gen_message = gen_message1.split('\n')
+            folder = gen_message[0]
+            sub_paths = gen_message[1]
+            root_folder = gen_message[-1]
+            if locate_folder == "NO":
+                os.makedirs(f'{root_folder}', exist_ok=True)
+                os.makedirs(f'{sub_paths}/{folder}', exist_ok= True)
+                print(f'Created new_dir:{sub_paths}/{folder}')
+            else:
+                os.makedirs(f'{locate_folder}/{root_folder}', exist_ok=True)
+                os.makedirs(f'{locate_folder}/{sub_paths}/{folder}', exist_ok= True)
+                print(f'Created new_dir:{locate_folder}/{sub_paths}/{folder}')
+                time.sleep(1)
+            return True
 
     if Folder == 'NO':
         recv_file1()
     else:
-        recv_folder_path()
+        report = recv_folder_path()
+        return report

@@ -145,20 +145,24 @@ def create_window(theme):
     
     pad1 = ((5, 0), (20, 0))
     pad2 = ((8, 0), (20, 0))
+    pad3 = ((5, 0), (10, 0))
+    pad4 = ((8, 0), (10, 0))
 
     layout = [
         [sg.Menu(spin_values)],
     	[sg.Push(), sg.Button('Restart', key='key-image', enable_events=True)],
     	[sg.Text('Ip_Address ==>', pad=pad1, font=font_family1,  visible=False, key='key-ip'), sg.Input('127.0.1.1', pad=pad2, font=font_family2,  visible=False, key='key-ip_input')],
-      	[sg.Text('Port    ====> ', font=font_family1, pad=pad1,  visible=False, key='key-port'), sg.Push(), sg.InputText('9999', font=font_family2, pad=pad2, disabled=True, visible=False, key='key-port_input', text_color='black')], 
+      	[sg.Text('Port    ====> ', font=font_family1, pad=pad3,  visible=False, key='key-port'), sg.Push(), sg.InputText('9999', font=font_family2, pad=pad4, disabled=True, visible=False, key='key-port_input', text_color='black')], 
       	[sg.VPush()],
-      	[sg.Text('Speed(buffer): ', font=font_family1, pad=(10, 40), visible=False, key='key-buffer'), sg.Input('2mb/s', key='key-buffer_input', pad=(0, 40),  visible=False, font=font_family2, disabled=True)],
-        [sg.Button('Ready', key='key-ready', visible=False)],
+      	[sg.Text('Speed(buffer): ', font=font_family1, pad=(5, 20), visible=False, key='key-buffer'), sg.Input('2mb/s', key='key-buffer_input', pad=(0, 20),  visible=False, font=font_family2, disabled=True)],
       	[sg.Input('File_name',  visible=False, size=(10, 30), font=font_family2, key='key-file_input', disabled=True, text_color='black'), sg.Button('Select_file',  visible=False, font='Arial 16 bold', key='key-file')],
       	[sg.Input('Folder_name',  visible=False, size=(10, 30), font=font_family2, key='key-folder_input', disabled=True, text_color='black'), sg.Button('Select_folder',  visible=False, font='Arial 16 bold', key='key-folder')],
-      	[sg.VPush()], 
+      	[sg.VPush()],
         [sg.Input('Select Destination', visible = False, size = (20, 40), font=font_family2, key = 'key-dest_input', text_color='black', disabled=True), sg.Button('Location', visible = False, font = 'Arial 16 bold', key = 'key-dest')],
         [sg.Text('sdfsdf', key='key-progress', text_color="red")],
+        [sg.Button('Select Location?', key='key-dest_btn', enable_events=True, visible=False, font="young 10 italic")],
+        [sg.Button('Ready', key='key-ready', visible=False, font="young 10 bold")],
+        [sg.Button('Recv-file', key='key-recv_file', visible=False, size = (10, 1), font='Arial 16 italic'), sg.Button('Recv-folder', key='key-recv_folder', visible=False, size = (10, 1), font='Arial 16 italic')],
       	[sg.Button('SEND', key='key-send', font='Arial 16 bold'), sg.Push(), sg.Button('RECEIVE', key='key-recv', font='Arial 16 bold')]
     	]
 
@@ -178,7 +182,7 @@ folder_set = False
 file_list = []
 folder_list2 = []
 dest_folder = "NO"
-
+running = True
 
 
 while True:
@@ -266,13 +270,16 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         window['key-file_input'].update(visible = False)
         folder = sg.popup_get_folder("Select folder", no_window=True)
         folder_list = listdir(folder)
+        window['key-dest_input'].update(str(folder.split('/')[-1]))
+        
 
         #define file_sending_script
         def exec_send_script2(filename, Folder):
             client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), folder = Folder)
         
-        #Define dir transfer
-        def Render_root(root_folder):
+        # #Define dir transfer
+        def Render_root_paths(root_folder):
+            #Render each path to client socket thorough each iteration and create copy starting from the root folder at the destination
             def Render_folder_paths(folderX, path):
                 new_folder = folderX.split('/')[-1]
                 index = path.find(new_folder)
@@ -285,26 +292,31 @@ Users are encouraged to provide valuable feedback in the event of encountering a
                 dir = f'{folder}' + '\n' + str(sub_paths) + '\n' + str(root_folder).split('/')[-1]
                 exec_send_script2(dir, Folder="YES")
                 time.sleep(2)
-            
-            def Render_files():
-                file_name = file_path
-                print(dest_folder)
-                exec_send_script2(file_name, Folder = "NO")
 
             dir_list = list(os.walk(root_folder))
             for path, folders, filenames in dir_list:
-
                 # Render_send_folder_path
                 for folder in folders:
                     send_folder_paths()
-
-                # #Render_folder_path
-                # for files in filenames:
-                #     file_path = f'{path}/{files}'
-                #     Render_files()
+                print("All folders sent and created")
+                print("Sending files.")
+                print("Sending files..")
+                print("Sending files...")
                     
+        Render_root_paths(folder)
 
-        Render_root(folder)
+
+        # def Render_files(root_folder):
+        #     def Render_file_paths():
+        #         file_name = file_path
+        #         exec_send_script2(file_name, Folder = "NO")
+        #     dir_list = list(os.walk(root_folder))
+        #         #Render_folder_path
+        #     for path, folders, filenames in dir_list:
+        #         for files in filenames:
+        #             file_path = f'{path}/{files}'
+        #             Render_file_paths()
+        exec_send_script2('END', Folder= "YES")
 
     if event == 'key-send' and reverse == False:
         reverse = True
@@ -326,6 +338,11 @@ Users are encouraged to provide valuable feedback in the event of encountering a
     if event == 'key-send' and ready_send == True:
          exec_send_script()
 
+    if event == "key-dest_btn":  
+        window['key-dest'].update(visible = True)
+        window['key-dest_input'].update(visible = True)
+        window['key-dest_btn'].update(visible = False)
+
       #updating recv changes
     if event == 'key-recv' and reverse == False:
         reverse = True
@@ -333,12 +350,15 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         window['key-ip_input'].update(visible = True)
         window['key-port'].update(visible = True)
         window['key-port_input'].update(visible = True)
+        # window['key-port_input'].update(visible = True)
         window['key-buffer'].update(visible = True)
         window['key-buffer_input'].update(visible = True)
         window['key-ready'].update(visible = True)
         window['key-send'].update(visible = False)
-        window['key-dest'].update(visible = True)
-        window['key-dest_input'].update(visible = True)
+        window['key-dest_btn'].update(visible = True)
+        window['key-recv'].update(visible = False)
+        window['key-recv_file'].update(visible = True)
+        window['key-recv_folder'].update(visible = True)
         recv = True
     
     if event == 'key-dest':
@@ -372,17 +392,20 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         ready_recv = True
         window['key-ready'].update(button_color = 'green')
 
-        #creating server function
+        #creating server functions for destination
         def exec_recv_script():
             return server.recv_file(int(buffer), str(ip_addr), int(port))
 
-        def exec_recv_script2(folder):
-            server.recv_file(int(buffer), str(ip_addr), int(port), Folder = folder)
+        def exec_recv_script2(folder, destination):
+             report = server.recv_file(int(buffer), str(ip_addr), int(port), Folder = folder, locate_folder=destination)
+             return report
 
 
     #executing recv scripts
-    if event == 'key-recv' and ready_recv:
-        exec_recv_script2(folder = 'YES')
+    if event == 'key-recv_folder' and ready_recv:
+        sg.popup("Please ensure to check that \n the file you are receiving \n is a folder before clicking \n this button")
+        while running:
+            running = exec_recv_script2(folder = 'YES', destination=dest_folder)
         window['key-ready'].update(button_color = 'Red')
 
     #Affirming ip_value
@@ -410,25 +433,3 @@ Users are encouraged to provide valuable feedback in the event of encountering a
 
 
 window.close()
-
-
-# import os
-# import PySimpleGUI as sg
-
-# folder = sg.popup_get_folder("Select folder", no_window=True)
-# file_list = []
-# folder_list = []
-
-# if folder:  # Check if a folder is selected
-#     for item in os.listdir(folder):
-#         if os.path.isfile(os.path.join(folder, item)):
-#             # Add files to file_list
-#             file_list.append(item)
-#         elif os.path.isdir(os.path.join(folder, item)):
-#             # Add folders to folder_list
-#             folder_list.append(item)
-
-# print("Files:")
-# print(file_list)
-# print("Folders:")
-# print(folder_list)
