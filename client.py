@@ -11,7 +11,7 @@ def send_files(conn_message, filename, end_message, host, port, folder ='No'):
     handshake = 'Hey server'
 
     def send_file(filename_par):
-        print(filename_par)
+        print(filename_par.split('/')[-1])
         filesize = os.path.getsize(filename)
         try:
             client.send((conn_message + '\n' + filename_par + '\n' + str(filesize)+ '\n' + end_message).encode())

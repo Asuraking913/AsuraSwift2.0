@@ -278,7 +278,7 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), folder = Folder)
         
         # #Define dir transfer
-        def Render_root_paths(root_folder):
+        def Render_root(root_folder):
             #Render each path to client socket thorough each iteration and create copy starting from the root folder at the destination
             def Render_folder_paths(folderX, path):
                 new_folder = folderX.split('/')[-1]
@@ -302,21 +302,12 @@ Users are encouraged to provide valuable feedback in the event of encountering a
                 print("Sending files.")
                 print("Sending files..")
                 print("Sending files...")
+
+                for files in filenames:
+                    print(f"{path}/{files}")
                     
-        Render_root_paths(folder)
-
-
-        # def Render_files(root_folder):
-        #     def Render_file_paths():
-        #         file_name = file_path
-        #         exec_send_script2(file_name, Folder = "NO")
-        #     dir_list = list(os.walk(root_folder))
-        #         #Render_folder_path
-        #     for path, folders, filenames in dir_list:
-        #         for files in filenames:
-        #             file_path = f'{path}/{files}'
-        #             Render_file_paths()
-        exec_send_script2('END', Folder= "YES")
+        Render_root(folder)
+        # exec_send_script2('END', Folder= "YES")
 
     if event == 'key-send' and reverse == False:
         reverse = True
@@ -392,9 +383,9 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         ready_recv = True
         window['key-ready'].update(button_color = 'green')
 
-        #creating server functions for destination
+        #creating server functions for destinations
         def exec_recv_script():
-            return server.recv_file(int(buffer), str(ip_addr), int(port))
+            return recv_file(int(buffer), str(ip_addr), int(port))
 
         def exec_recv_script2(folder, destination):
              report = server.recv_file(int(buffer), str(ip_addr), int(port), Folder = folder, locate_folder=destination)
@@ -403,9 +394,14 @@ Users are encouraged to provide valuable feedback in the event of encountering a
 
     #executing recv scripts
     if event == 'key-recv_folder' and ready_recv:
-        sg.popup("Please ensure to check that \n the file you are receiving \n is a folder before clicking \n this button")
+        sg.popup("Please ensure that you are \n actually receiving a folder before \n clicking this button")
         while running:
             running = exec_recv_script2(folder = 'YES', destination=dest_folder)
+        window['key-ready'].update(button_color = 'Red')
+    
+    if event == 'key-recv_file' and ready_recv:
+        sg.popup("Please ensure that you are \n actually receiving a file before \n clicking this button")
+        exec_recv_script()
         window['key-ready'].update(button_color = 'Red')
 
     #Affirming ip_value
