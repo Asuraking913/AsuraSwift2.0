@@ -24,7 +24,7 @@ spin_values = [
 
 
 #functions
-def recv_file(buffer, host, port):
+def recv_file(buffer, host, port, location):
     
     #socket object
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -74,7 +74,7 @@ def recv_file(buffer, host, port):
     #             done = True
     #         progress.update(len(data))
 
-    file = open(file_name, 'wb')
+    file = open(f"{location}/{file_name}", 'wb')
 
     while not done:
         data = client.recv(buffer)
@@ -121,7 +121,6 @@ def send_file(connmessage, filename, lastmessage, host, port):
 
     progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024,
                          total = int(filesize))
-
 
     with open(filename, 'rb') as file:
         while True:
@@ -251,7 +250,13 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             ready_send = True
             
             #cient parameters
-            file_name = file_path
+            if dest_folder == "NO":
+                file_name = file_path
+            else:
+                file_path = file.split('/')
+                file_name = file_path[-1]
+                new_path = f"{dest_folder}/{file_name}"
+                file_name = new_path
             try:
                 file_size = os.path.getsize(file)
             except FileNotFoundError:
@@ -301,10 +306,14 @@ Users are encouraged to provide valuable feedback in the event of encountering a
                 print("All folders sent and created")
                 print("Sending files.")
                 print("Sending files..")
-                print("Sending files...")
+                print("Sending files...")  
+            time.sleep(2)
 
+            for path, folders, filenames in dir_list:
                 for files in filenames:
-                    print(f"{path}/{files}")
+                    dir_files = f"{path}/{files}"
+                    exec_send_script2(dir_files, Folder = "NO")
+                    time.sleep(2)
                     
         Render_root(folder)
         # exec_send_script2('END', Folder= "YES")
@@ -321,13 +330,15 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         window['key-folder'].update(visible = True)
         window['key-folder_input'].update(visible = True)
         window['key-recv'].update(visible = False)
+        window['key-dest_btn'].update(visible = True)
+
 
         #running external scripts
         def exec_send_script():
             send_file(conn_message, str(file_name), end_message, str(value['key-ip_input']), int(value['key-port_input']))
         
     if event == 'key-send' and ready_send == True:
-         exec_send_script()
+        exec_send_script()
 
     if event == "key-dest_btn":  
         window['key-dest'].update(visible = True)
@@ -385,10 +396,14 @@ Users are encouraged to provide valuable feedback in the event of encountering a
 
         #creating server functions for destinations
         def exec_recv_script():
-            return recv_file(int(buffer), str(ip_addr), int(port))
+            return recv_file(int(buffer), str(ip_addr), int(port), location = dest_folder)
 
         def exec_recv_script2(folder, destination):
              report = server.recv_file(int(buffer), str(ip_addr), int(port), Folder = folder, locate_folder=destination)
+             return report
+
+        def exec_recv_script3(folder, destination):
+             report = server.recv_file1(int(buffer), str(ip_addr), int(port), Folder = folder, locate_folder=destination)
              return report
 
 
@@ -397,6 +412,9 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         sg.popup("Please ensure that you are \n actually receiving a folder before \n clicking this button")
         while running:
             running = exec_recv_script2(folder = 'YES', destination=dest_folder)
+        time.sleep(2)
+        while running:
+            running = exec_recv_script2(folder = 'NO', destination=dest_folder)
         window['key-ready'].update(button_color = 'Red')
     
     if event == 'key-recv_file' and ready_recv:

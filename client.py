@@ -5,7 +5,7 @@ import tqdm
 host = socket.gethostbyname(socket.gethostname())
 port = 9999
 
-def send_files(conn_message, filename, end_message, host, port, folder ='No'):
+def send_files(conn_message, filename, end_message, host, port, folder ='NO'):
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     handshake = 'Hey server'
@@ -22,7 +22,7 @@ def send_files(conn_message, filename, end_message, host, port, folder ='No'):
 
         with open(filename_par, 'rb') as file:
             while True:
-                data = file.read(2000000)
+                data = file.read(1024)
                 if data:
                     try:
                         client.sendall(data)
