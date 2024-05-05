@@ -277,10 +277,12 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         folder_list = listdir(folder)
         window['key-dest_input'].update(str(folder.split('/')[-1]))
         
+        #Seperating root folder
+        main_root_folder = folder.split('/')[-1]
 
         #define file_sending_script
         def exec_send_script2(filename, Folder):
-            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), folder = Folder)
+            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), root_folder=main_root_folder, folder = Folder)
         
         # #Define dir transfer
         def Render_root(root_folder):
@@ -307,16 +309,17 @@ Users are encouraged to provide valuable feedback in the event of encountering a
                 print("Sending files.")
                 print("Sending files..")
                 print("Sending files...")  
-            time.sleep(2)
+            time.sleep(1)
+            exec_send_script2('END', Folder= "YES")
 
             for path, folders, filenames in dir_list:
                 for files in filenames:
                     dir_files = f"{path}/{files}"
                     exec_send_script2(dir_files, Folder = "NO")
-                    time.sleep(2)
+                    time.sleep(1)
                     
         Render_root(folder)
-        # exec_send_script2('END', Folder= "YES")
+        exec_send_script2('END', Folder= "YES")
 
     if event == 'key-send' and reverse == False:
         reverse = True
@@ -330,8 +333,6 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         window['key-folder'].update(visible = True)
         window['key-folder_input'].update(visible = True)
         window['key-recv'].update(visible = False)
-        window['key-dest_btn'].update(visible = True)
-
 
         #running external scripts
         def exec_send_script():
@@ -399,22 +400,24 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             return recv_file(int(buffer), str(ip_addr), int(port), location = dest_folder)
 
         def exec_recv_script2(folder, destination):
-             report = server.recv_file(int(buffer), str(ip_addr), int(port), Folder = folder, locate_folder=destination)
+             report = server.recv_file(int(buffer), str(ip_addr), int(port), locate_folder=destination)
              return report
 
-        def exec_recv_script3(folder, destination):
-             report = server.recv_file1(int(buffer), str(ip_addr), int(port), Folder = folder, locate_folder=destination)
+        def exec_recv_script3(destination):
+             report = server.recv_file1(int(buffer), str(ip_addr), int(port), locate_folder=destination)
              return report
-
 
     #executing recv scripts
     if event == 'key-recv_folder' and ready_recv:
         sg.popup("Please ensure that you are \n actually receiving a folder before \n clicking this button")
         while running:
+            print("Script 2 executing")
             running = exec_recv_script2(folder = 'YES', destination=dest_folder)
-        time.sleep(2)
+        time.sleep(1)
+        running = True
         while running:
-            running = exec_recv_script2(folder = 'NO', destination=dest_folder)
+            print("Script 3 executing")
+            running = exec_recv_script3(destination=dest_folder)
         window['key-ready'].update(button_color = 'Red')
     
     if event == 'key-recv_file' and ready_recv:

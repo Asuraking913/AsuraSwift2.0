@@ -1,11 +1,12 @@
 import socket
 import os
+import time
 import tqdm
 
 host = socket.gethostbyname(socket.gethostname())
 port = 9999
 
-def send_files(conn_message, filename, end_message, host, port, folder ='NO'):
+def send_files(conn_message, filename, end_message, host, port, root_folder, folder ='NO'):
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     handshake = 'Hey server'
@@ -14,7 +15,8 @@ def send_files(conn_message, filename, end_message, host, port, folder ='NO'):
         print(filename_par.split('/')[-1])
         filesize = os.path.getsize(filename)
         try:
-            client.send((conn_message + '\n' + filename_par + '\n' + str(filesize)+ '\n' + end_message).encode())
+            client.send((conn_message + '\n' + filename_par + '\n' + str(filesize)+ '\n' + end_message + '\n' + root_folder).encode())
+            time.sleep(0.5)
         except BrokenPipeError:
             pass
         progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024,

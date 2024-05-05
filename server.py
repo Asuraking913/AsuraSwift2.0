@@ -1,9 +1,10 @@
+from fileinput import filename
 import socket
 import os
 import time 
 import tqdm 
 
-def recv_file(buffer, host, port, Folder = 'NO', locate_folder = "NO"):
+def recv_file(buffer, host, port, locate_folder = "NO"):
     
     #socket object
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -75,6 +76,7 @@ def recv_file1(buffer, host, port, locate_folder = "NO"):
         # file_name1 = f'Received_{file_name1}'
         file_size = gen_message[2]
         end_message = gen_message[3]
+        root_folder = gen_message[4]
 
         print(conn_message)
         print(f"Created {file_name1} at {file_name}")
@@ -87,24 +89,20 @@ def recv_file1(buffer, host, port, locate_folder = "NO"):
                 
         done = False
 
-        if locate_folder == "NO":
-            with open(file_name1, 'wb') as file:
-                while not done:
-                    data = client.recv(buffer)
-                    if data:
-                        file.write(data)
-                    else:
-                        done = True
-                    progress.update(len(data))
-        else:
-            with open(f"{locate_folder}/{file_name1}", 'wb') as file:
-                while not done:
-                    data = client.recv(buffer)
-                    if data:
-                        file.write(data)
-                    else:
-                        done = True
-                    progress.update(len(data))
+        str1 = file_name
+        str2 = root_folder
+        index = str1.find(str2)
+        relative_path = str1[index + len(str2):]
+        final_path = str2 + relative_path
+
+        with open(f"{locate_folder}/{final_path}", 'wb') as file:
+            while not done:
+                data = client.recv(buffer)
+                if data:
+                    file.write(data)
+                else:
+                    done = True
+                progress.update(len(data))
 
         # while not done:
         #     data = client.recv(buffer)
@@ -114,4 +112,4 @@ def recv_file1(buffer, host, port, locate_folder = "NO"):
         #     else:
         #         done = True
         print(end_message)
-        return True
+        return False
