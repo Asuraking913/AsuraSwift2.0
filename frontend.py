@@ -278,9 +278,10 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         folder = sg.popup_get_folder("Select folder", no_window=True)
         try:
             folder_list = listdir(folder)
-        except Exception as e:
-            print("Exception {e}")
-            folder = ""
+        except TypeError:
+            continue
+        except FileNotFoundError:
+            continue
             
         window['key-dest_input'].update(str(folder.split('/')[-1]))
         
@@ -426,7 +427,7 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         while running:
             print("Script 2 executing")
             running = exec_recv_script2(folder = 'YES', destination=dest_folder)
-        time.sleep(1)
+        time.sleep(1.5)
         running = True
         while running:
             print("Script 3 executing")

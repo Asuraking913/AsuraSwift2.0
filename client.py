@@ -16,7 +16,7 @@ def send_files(conn_message, filename, end_message, host, port, root_folder, fol
         filesize = os.path.getsize(filename)
         try:
             client.send((conn_message + '\n' + filename_par + '\n' + str(filesize)+ '\n' + end_message + '\n' + root_folder).encode())
-            time.sleep(0.5)
+            time.sleep(1)
         except BrokenPipeError:
             pass
         progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024,
