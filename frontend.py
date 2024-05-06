@@ -182,6 +182,8 @@ file_list = []
 folder_list2 = []
 dest_folder = "NO"
 running = True
+folder_ready = False
+
 
 
 while True:
@@ -274,9 +276,40 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         window['key-file'].update(visible = False)
         window['key-file_input'].update(visible = False)
         folder = sg.popup_get_folder("Select folder", no_window=True)
-        folder_list = listdir(folder)
+        try:
+            folder_list = listdir(folder)
+        except Exception as e:
+            print("Exception {e}")
+            folder = ""
+            
         window['key-dest_input'].update(str(folder.split('/')[-1]))
         
+        
+                    
+        folder_ready = True
+
+    if event == 'key-send' and reverse == False:
+        reverse = True
+        send = True
+        window['key-ip'].update(visible = True)
+        window['key-ip_input'].update(visible = True)
+        window['key-port'].update(visible = True)
+        window['key-port_input'].update(visible = True)
+        window['key-file'].update(visible = True)
+        window['key-file_input'].update(visible = True)
+        window['key-folder'].update(visible = True)
+        window['key-folder_input'].update(visible = True)
+        window['key-recv'].update(visible = False)
+
+        #running external scripts
+        def exec_send_script():
+            send_file(conn_message, str(file_name), end_message, str(value['key-ip_input']), int(value['key-port_input']))
+        
+    if event == 'key-send' and ready_send == True:
+        exec_send_script()
+
+    if event == 'key-send' and folder_ready == True:
+
         #Seperating root folder
         main_root_folder = folder.split('/')[-1]
 
@@ -317,29 +350,9 @@ Users are encouraged to provide valuable feedback in the event of encountering a
                     dir_files = f"{path}/{files}"
                     exec_send_script2(dir_files, Folder = "NO")
                     time.sleep(1)
-                    
+
         Render_root(folder)
         exec_send_script2('END', Folder= "YES")
-
-    if event == 'key-send' and reverse == False:
-        reverse = True
-        send = True
-        window['key-ip'].update(visible = True)
-        window['key-ip_input'].update(visible = True)
-        window['key-port'].update(visible = True)
-        window['key-port_input'].update(visible = True)
-        window['key-file'].update(visible = True)
-        window['key-file_input'].update(visible = True)
-        window['key-folder'].update(visible = True)
-        window['key-folder_input'].update(visible = True)
-        window['key-recv'].update(visible = False)
-
-        #running external scripts
-        def exec_send_script():
-            send_file(conn_message, str(file_name), end_message, str(value['key-ip_input']), int(value['key-port_input']))
-        
-    if event == 'key-send' and ready_send == True:
-        exec_send_script()
 
     if event == "key-dest_btn":  
         window['key-dest'].update(visible = True)

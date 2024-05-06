@@ -26,6 +26,7 @@ def recv_file(buffer, host, port, locate_folder = "NO"):
     def recv_folder_path():
         gen_message1 = client.recv(1024).decode()
         if gen_message1 == "END":
+            print("Transmission terminated")
             return False
         else:
             gen_message = gen_message1.split('\n')
@@ -79,7 +80,6 @@ def recv_file1(buffer, host, port, locate_folder = "NO"):
         root_folder = gen_message[4]
 
         print(conn_message)
-        print(f"Created {file_name1} at {file_name}")
         print(file_size)
 
         global progress
@@ -111,5 +111,6 @@ def recv_file1(buffer, host, port, locate_folder = "NO"):
         #         progress.update(len(data))
         #     else:
         #         done = True
+        print(f"Created {file_name1} at {locate_folder}/{final_path}")
         print(end_message)
-        return False
+        return True
