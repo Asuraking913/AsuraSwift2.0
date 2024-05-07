@@ -17,8 +17,13 @@ def send_files(conn_message, filename, end_message, host, port, root_folder, fol
         try:
             client.send((conn_message + '\n' + filename_par + '\n' + str(filesize)+ '\n' + end_message + '\n' + root_folder).encode())
             time.sleep(1)
-        except BrokenPipeError:
-            pass
+        except Exception as e:
+            time.sleep(2)
+        # except BrokenPipeError:
+        #     pass
+        
+        # except ConnectionRefusedError:
+        #     time.sleep(2)
         progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024,
                             total = int(filesize))
 
@@ -29,8 +34,8 @@ def send_files(conn_message, filename, end_message, host, port, root_folder, fol
                     try:
                         client.sendall(data)
                         progress.update(len(data))
-                    except BrokenPipeError or ConnectionResetError:
-                        pass
+                    except Exception as e:
+                        time.sleep(2)
                 else:
                     break
 
