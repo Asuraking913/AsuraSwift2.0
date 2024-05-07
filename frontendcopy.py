@@ -20,10 +20,184 @@ spin_values = [
         ['Info', ['Help', 'About']]
         ]
 
+#functions for folder transmission
+def send_folder_files(conn_message, filename, end_message, host, port, root_folder, folder ='NO'):
+
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    handshake = 'Hey server'
+
+    def send_file(filename_par):
+        print(filename_par.split('/')[-1])
+        filesize = os.path.getsize(filename)
+        try:
+            client.send((conn_message + '\n' + filename_par + '\n' + str(filesize)+ '\n' + end_message + '\n' + root_folder).encode())
+            time.sleep(1)
+        except BrokenPipeError:
+            pass
+        progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024,
+                            total = int(filesize))
+
+        with open(filename_par, 'rb') as file:
+            while True:
+                data = file.read(1024)
+                if data:
+                    try:
+                        client.sendall(data)
+                        progress.update(len(data))
+                    except BrokenPipeError or ConnectionResetError:
+                        pass
+                else:
+                    break
+
+    def send_folder_path(filename1_par):
+        print("Sending.")
+        print("Sending..")
+        print("Sending...")
+        try:
+            client.send((f"{filename1_par}").encode())
+            file_name1 = filename1_par.split('\n')[0]
+            print(f'Sent folder |{file_name1}| to Recv socket')
+        except BrokenPipeError:
+            pass
+
+    
+    #Exchange handshake
+    while True:
+        try:
+            client.connect((host, port))
+            client.send(handshake.encode())
+            break
+        except Exception as e:
+            print(f"Waiting for Connection.    {e}")
+            print(f"Waiting for Connection..   {e}")
+            print(f"Waiting for Connection...  {e}")
+            print(f"Waiting for Connection.... {e}")
+            print(f"Waiting for Connection.....{e}")
+
+    try:
+        if folder == 'NO':
+            send_file(filename)
+        else:
+            send_folder_path(filename)
+    finally:
+        client.close()
 
 
+#receiving
 
-#functions
+
+def recv_folder_dir(buffer, host, port, locate_folder = "NO"):
+    
+    #socket object
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    response = "Received_handshake"
+
+    try:
+        server.bind((host, port))
+    except Exception as e:
+        pass
+    server.listen()
+    
+    client, addr = server.accept()
+
+    #hanshake
+    handshake = client.recv(10).decode()
+    print(handshake)
+    # client.send(f"Received_handshakes".encode())
+
+    def recv_folder_path():
+        gen_message1 = client.recv(1024).decode()
+        if gen_message1 == "END":
+            print("Transmission terminated")
+            return False
+        else:
+            gen_message = gen_message1.split('\n')
+            folder = gen_message[0]
+            sub_paths = gen_message[1]
+            root_folder = gen_message[-1]
+            if locate_folder == "NO":
+                os.makedirs(f'{root_folder}', exist_ok=True)
+                os.makedirs(f'{sub_paths}/{folder}', exist_ok= True)
+                print(f'Created new_dir:{sub_paths}/{folder}')
+            else:
+                os.makedirs(f'{locate_folder}/{root_folder}', exist_ok=True)
+                os.makedirs(f'{locate_folder}/{sub_paths}/{folder}', exist_ok= True)
+                print(f'Created new_dir:{locate_folder}/{sub_paths}/{folder}')
+                time.sleep(1)
+        return False
+
+    report = recv_folder_path()
+    return report
+
+def recv_folder_files(buffer, host, port, locate_folder = "NO"):
+    
+    #socket object
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    response = "Received_handshake"
+
+    try:
+        server.bind((host, port))
+    except Exception as e:
+        pass
+    server.listen()
+    
+    client, addr = server.accept()
+
+    #hanshake
+    handshake = client.recv(10).decode()
+    print(handshake)
+    # client.send(f"Received_handshakes".encode())    
+
+    gen_message1 = client.recv(1024).decode()
+    if gen_message1 == "END":
+        return False
+    else:
+        gen_message = gen_message1.split('\n')
+        conn_message = gen_message[0]
+        file_name = gen_message[1]
+        file_name1 = file_name.split('/')[-1]
+        # file_name1 = f'Received_{file_name1}'
+        file_size = gen_message[2]
+        end_message = gen_message[3]
+        root_folder = gen_message[4]
+
+        print(conn_message)
+        print(file_size)
+
+        global progress
+
+        progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024, 
+                                total = int(file_size))
+                
+        done = False
+
+        str1 = file_name
+        str2 = root_folder
+        index = str1.find(str2)
+        relative_path = str1[index + len(str2):]
+        final_path = str2 + relative_path
+
+        with open(f"{locate_folder}/{final_path}", 'wb') as file:
+            while not done:
+                data = client.recv(buffer)
+                if data:
+                    file.write(data)
+                else:
+                    done = True
+                progress.update(len(data))
+
+        # while not done:
+        #     data = client.recv(buffer)
+        #     if data:
+        #         file.write(data)
+        #         progress.update(len(data))
+        #     else:
+        #         done = True
+        print(f"Created {file_name1} at {locate_folder}/{final_path}")
+        print(end_message)
+    return False
+
+#functions for files Transmission
 def recv_file(buffer, host, port, location):
     
     #socket object
@@ -281,12 +455,9 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         except TypeError:
             continue
         except FileNotFoundError:
-            continue
-            
+            continue            
         window['key-dest_input'].update(str(folder.split('/')[-1]))
-        
-        
-                    
+
         folder_ready = True
 
     if event == 'key-send' and reverse == False:
@@ -316,7 +487,7 @@ Users are encouraged to provide valuable feedback in the event of encountering a
 
         #define file_sending_script
         def exec_send_script2(filename, Folder):
-            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), root_folder=main_root_folder, folder = Folder)
+            send_folder_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), root_folder=main_root_folder, folder = Folder)
         
         # #Define dir transfer
         def Render_root(root_folder):
@@ -343,7 +514,7 @@ Users are encouraged to provide valuable feedback in the event of encountering a
                 print("Sending files.")
                 print("Sending files..")
                 print("Sending files...")  
-            time.sleep(1)
+            time.sleep(2)
             exec_send_script2('END', Folder= "YES")
 
             for path, folders, filenames in dir_list:
@@ -352,7 +523,6 @@ Users are encouraged to provide valuable feedback in the event of encountering a
                     exec_send_script2(dir_files, Folder = "NO")
                     time.sleep(1)
             exec_send_script2('END', Folder= "YES")
-            print("Folders Transmiteed sucessfully")
         Render_root(folder)
 
     if event == "key-dest_btn":  
@@ -414,11 +584,11 @@ Users are encouraged to provide valuable feedback in the event of encountering a
             return recv_file(int(buffer), str(ip_addr), int(port), location = dest_folder)
 
         def exec_recv_script2(folder, destination):
-             report = server.recv_file(int(buffer), str(ip_addr), int(port), locate_folder=destination)
+             report = recv_folder_dir(int(buffer), str(ip_addr), int(port), locate_folder=destination)
              return report
 
         def exec_recv_script3(destination):
-             report = server.recv_file1(int(buffer), str(ip_addr), int(port), locate_folder=destination)
+             report = recv_folder_files(int(buffer), str(ip_addr), int(port), locate_folder=destination)
              return report
 
     #executing recv scripts
@@ -432,7 +602,6 @@ Users are encouraged to provide valuable feedback in the event of encountering a
         while running:
             print("Script 3 executing")
             running = exec_recv_script3(destination=dest_folder)
-        print("Files Received sucessfully")
         window['key-ready'].update(button_color = 'Red')
     
     if event == 'key-recv_file' and ready_recv:
