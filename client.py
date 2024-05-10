@@ -14,6 +14,7 @@ def send_files(conn_message, filename, end_message, host, port, root_folder, fol
     def send_file(filename_par):
         print(filename_par.split('/')[-1])
         filesize = os.path.getsize(filename)
+<<<<<<< HEAD
         while True:
             try:
                 client.send((conn_message + '\n' + filename_par + '\n' + str(filesize)+ '\n' + end_message + '\n' + root_folder).encode())
@@ -30,6 +31,18 @@ def send_files(conn_message, filename, end_message, host, port, root_folder, fol
                 client.send((conn_message + '\n' + filename_par + '\n' + str(filesize)+ '\n' + end_message + '\n' + root_folder).encode())
 
         
+=======
+        try:
+            client.send((conn_message + '\n' + filename_par + '\n' + str(filesize)+ '\n' + end_message + '\n' + root_folder).encode())
+            time.sleep(1)
+        except Exception as e:
+            time.sleep(2)
+        # except BrokenPipeError:
+        #     pass
+        
+        # except ConnectionRefusedError:
+        #     time.sleep(2)
+>>>>>>> origin/master
         progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024,
                             total = int(filesize))
 

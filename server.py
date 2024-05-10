@@ -3,8 +3,11 @@ import socket
 import os
 import time 
 import tqdm 
+<<<<<<< HEAD
 import PySimpleGUI as sg
 import threading
+=======
+>>>>>>> origin/master
 
 def recv_file(buffer, host, port, locate_folder = "NO"):
     
@@ -12,7 +15,10 @@ def recv_file(buffer, host, port, locate_folder = "NO"):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     response = "Received_handshake"
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/master
     try:
         server.bind((host, port))
     except Exception as e:
