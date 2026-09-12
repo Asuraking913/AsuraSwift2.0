@@ -1,569 +1,550 @@
-from pydoc import visiblename
-<<<<<<< HEAD
+"""AsuraSwift -- offline file and folder transfer over a local network.
+
+A four-step guided flow. Addresses are discovered over UDP broadcast rather
+than typed, so there is no IP, port or buffer field to fill in.
+
+Sending:   Mode -> Device -> Files -> Transfer
+Receiving: Mode -> Save to -> Waiting -> Transfer
+"""
+import os
+import socket
 import threading
 import time
-from tkinter.ttk import Progressbar
-=======
-import time
->>>>>>> origin/master
-import PySimpleGUI as sg
 from pathlib import Path
-import os
-from random import choice
-from os import listdir
-import socket
-import tqdm
-import shutil
+
+import PySimpleGUI as sg
+
 import client
+import discovery
+import filepicker
 import server
+from protocol import DEFAULT_PORT, build_manifest, human_bytes, human_time
 
-theme = choice(['DarkPurple6', 'TanBlue', 'DarkGreen', 'BlueMono', 'DarkBlue17', 'DarkBlue3', 'lightGreen'])
+THEME = "DarkGrey13"
+ACCENT = "#4FC3F7"
+MUTED = "#6E7681"
+OK_GREEN = "#5CB85C"
+FIELD_BG = "#21262D"
+FIELD_FG = "#C9D1D9"
+RULE = "#30363D"
+ERR_RED = "#D9534F"
 
+FONT_TITLE = ("Helvetica", 19, "bold")
+FONT_CRUMB = ("Helvetica", 9)
+FONT_STEP = ("Helvetica", 13, "bold")
+FONT_BODY = ("Helvetica", 11)
+FONT_SMALL = ("Helvetica", 9)
+FONT_BTN = ("Helvetica", 11, "bold")
 
-spin_values = [
-        ['Ports', ['9999', '9090', '8989']],
-        ['Buffer', ['2mb/s', '4mb/s', '6mb/s', 'custom']],
-        ['Info', ['Help', 'About']]
-        ]
+CRUMBS = {
+    "send": ["Mode", "Device", "Files", "Transfer"],
+    "recv": ["Mode", "Save to", "Waiting", "Transfer"],
+}
+NUMERALS = "①②③④"
 
-<<<<<<< HEAD
-=======
+HELP_TEXT = """AsuraSwift - User Guide
 
+Both computers must be on the same network. A phone hotspot works well:
+have both machines join it. No internet or mobile data is used - the
+files travel directly between the two computers.
 
+To receive:
+  1. Click RECEIVE.
+  2. Choose the folder to save into.
+  3. Wait. Your computer announces itself automatically.
 
->>>>>>> origin/master
-#functions
-def recv_file(buffer, host, port, location):
-    
-    #socket object
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    response = "Received_handshake"
+To send:
+  1. Click SEND.
+  2. Pick the receiving computer from the list. It appears on its own -
+     there is no address to type. Start the receiver first.
+  3. Choose files and/or folders, then press Send.
 
-    try:
-        server.bind((host, port))
-    except Exception as e:
-        pass
-    server.listen()
-    
-    client, addr = server.accept()
+If the list stays empty, the network may be blocking device discovery.
+Use "Enter address manually" and type the address shown on the
+receiving computer's waiting screen."""
 
-    #hanshake
-    handshake = client.recv(10).decode()
-    print(handshake)
-    client.send("Received_handshake".encode())
-
-<<<<<<< HEAD
-    # #progress
-    # def progress_bar(new_size, total, target_file):
-    #     layout = [
-    #         [sg.ProgressBar(total,orientation="h",size=(50, 50), bar_color=("red","white"), key="progress")],
-    #         [sg.Text(f'Transferring {200} and {400} folders')]
-    #     ]
-
-    #     progress = 0
-    #     window = sg.Window("Progress Bar", layout)
-
-    #     while True:
-    #         event, value = window.read()
-
-    #         new_size = os.path.getsize(target_file)
-    #         progress += new_size
-    #         window['progress'].update(progress)
-    #         if new_size ==total:
-    #             time.sleep(30)
-    #             break
-
-
-    #     window.close()
-
-=======
->>>>>>> origin/master
-    #split gen message
-    gen_message = client.recv(1024).decode()
-    gen_message = gen_message.split('\n')
-
-    conn_message = gen_message[0]
-    file_name = gen_message[1]
-    file_name = file_name.split('/')[-1]
-    file_name = f'Received_{file_name}'
-    file_size = gen_message[2]
-    end_message = gen_message[3]
-
-    print(conn_message)
-    print(file_name)
-    print(file_size)
-
-    global progress
-
-    progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024, 
-                    total = int(file_size))
-    
-    done = False
-
-    # with open(file_name, 'wb') as file:
-    #     while not done:
-    #         data = client.recv(buffer)
-    #         if data:
-    #             file.write(data)
-    #         else:
-    #             done = True
-    #         progress.update(len(data))
-
-    file = open(f"{location}/{file_name}", 'wb')
-
-<<<<<<< HEAD
-    # threading.Thread(target=progress_bar, args = (os.path.getsize(gen_message[1]), file_size, gen_message[0]))
-
-
-=======
->>>>>>> origin/master
-    while not done:
-        data = client.recv(buffer)
-        if data:
-            file.write(data)
-            progress.update(len(data))
-        else:
-            done = True
-    
-
-    client.close()
-    server.close()
-    print(end_message)
-
-
-def send_file(connmessage, filename, lastmessage, host, port):
-
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    handshake = 'Hey server'
-    
-
-    #Exchange handshake
-    while True:
-        try:
-            client.connect((host, port))
-            client.send(handshake.encode())
-            break
-        except Exception as e:
-            print("Waiting for Connection.")
-            print("Waiting for Connection..")
-            print("Waiting for Connection...")
-            print("Waiting for Connection....")
-            print("Waiting for Connection.....")
-    
-    reponse = client.recv(18).decode()
-    print(reponse)
-        
-    filesize = os.path.getsize(filename)
-
-    try:
-        client.send((connmessage + '\n' + filename + '\n' + str(filesize) + '\n' + lastmessage).encode())
-    except BrokenPipeError:
-        pass
-
-    progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024,
-                         total = int(filesize))
-
-    with open(filename, 'rb') as file:
-        while True:
-            data = file.read(2000000)
-            if data:
-                try:
-                    client.sendall(data)
-                    progress.update(len(data))
-                except BrokenPipeError or ConnectionResetError:
-                    pass
-            else:
-                break
-
-
-    client.close()
-
-def create_window(theme):
-    sg.theme(theme)
-    font_family1 = 'TimesNewRoman 15 bold'
-    font_family2 = 'Franklin 20'
-    
-    pad1 = ((5, 0), (20, 0))
-    pad2 = ((8, 0), (20, 0))
-    pad3 = ((5, 0), (10, 0))
-    pad4 = ((8, 0), (10, 0))
-
-    layout = [
-        [sg.Menu(spin_values)],
-    	[sg.Push(), sg.Button('Restart', key='key-image', enable_events=True)],
-    	[sg.Text('Ip_Address ==>', pad=pad1, font=font_family1,  visible=False, key='key-ip'), sg.Input('127.0.1.1', pad=pad2, font=font_family2,  visible=False, key='key-ip_input')],
-      	[sg.Text('Port    ====> ', font=font_family1, pad=pad3,  visible=False, key='key-port'), sg.Push(), sg.InputText('9999', font=font_family2, pad=pad4, disabled=True, visible=False, key='key-port_input', text_color='black')], 
-      	[sg.VPush()],
-      	[sg.Text('Speed(buffer): ', font=font_family1, pad=(5, 20), visible=False, key='key-buffer'), sg.Input('2mb/s', key='key-buffer_input', pad=(0, 20),  visible=False, font=font_family2, disabled=True)],
-      	[sg.Input('File_name',  visible=False, size=(10, 30), font=font_family2, key='key-file_input', disabled=True, text_color='black'), sg.Button('Select_file',  visible=False, font='Arial 16 bold', key='key-file')],
-      	[sg.Input('Folder_name',  visible=False, size=(10, 30), font=font_family2, key='key-folder_input', disabled=True, text_color='black'), sg.Button('Select_folder',  visible=False, font='Arial 16 bold', key='key-folder')],
-      	[sg.VPush()],
-        [sg.Input('Select Destination', visible = False, size = (20, 40), font=font_family2, key = 'key-dest_input', text_color='black', disabled=True), sg.Button('Location', visible = False, font = 'Arial 16 bold', key = 'key-dest')],
-        [sg.Text('sdfsdf', key='key-progress', text_color="red")],
-        [sg.Button('Select Location?', key='key-dest_btn', enable_events=True, visible=False, font="young 10 italic")],
-        [sg.Button('Ready', key='key-ready', visible=False, font="young 10 bold")],
-        [sg.Button('Recv-file', key='key-recv_file', visible=False, size = (10, 1), font='Arial 16 italic'), sg.Button('Recv-folder', key='key-recv_folder', visible=False, size = (10, 1), font='Arial 16 italic')],
-      	[sg.Button('SEND', key='key-send', font='Arial 16 bold'), sg.Push(), sg.Button('RECEIVE', key='key-recv', font='Arial 16 bold')]
-    	]
-
-
-    return sg.Window('AsuraSwift', layout, size=(350, 450), element_justification='center')
-
-
-#global Variable
-window = create_window(theme)
-reverse = False
-send = False
-recv = False
-ready_recv = False
-ready_send = False
-ready_send2 = False
-folder_set = False
-file_list = []
-folder_list2 = []
-dest_folder = "NO"
-running = True
-folder_ready = False
-<<<<<<< HEAD
-total_files = 0 
-=======
->>>>>>> origin/master
-
-
-
-while True:
-
-    event, value = window.read()
-
-    if event == sg.WINDOW_CLOSED:
-        break
-
-    if event in spin_values[0][1]:
-        window['key-port_input'].update(event)
-
-    if event in spin_values[1][1] and recv == True:
-        window['key-buffer_input'].update(event)
-    
-    if event == 'Help':
-        file = Path('Help.txt')
-        # sg.popup('How to use the app', file.read_text())
-        sg.popup("""AsuraSwift 1.0 User Guide
-
-For the Sender:
-
-Ensure a third device (e.g., phone with a hotspot) is available.
-Both computers connect to the same hotspot.
-In the app, set the IP address and port on both computers to match the hotspot's values.
-The IP address and port should be that of the device creating the hotspot.
-Select the file to send and initiate the transfer.
-Note: Receiver must click "Receive" before the sender clicks "send"
-
-For the Receiver:
-
-Set the IP address and port to match the sender's values.
-Optionally adjust the speed (buffer) for large files, but avoid unnecessary increases.
-Click "Ready" and wait for the color indicator to turn green.
-The sender can now press "Send" to initiate the transfer.
-Note: Avoid excessive speed increases to prevent system glitches.
-
-This guide facilitates seamless file transfer without relying on internet or data connections.""", no_titlebar=True)
-    
-    if event == 'About':
-        file = Path('About.txt')
-        sg.popup("""AsuraSwift 1.0 Information
+ABOUT_TEXT = """AsuraSwift
 
 Developed by AsuraKing913 (Israel Shedrack)
 
-AsuraSwift 1.0 is a graphical user interface (GUI) application crafted by AsuraKing913, an aspiring coder with ambitions to reach god-level proficiency in the tech realm. The app is currently in its prototype phase, acknowledging the possibility of errors or bugs during operation.
+A graphical tool for moving files and folders between two computers on
+the same local network, with no internet connection required.
 
-Contact for Feedback:
-
-Email: israelshedrack913@gmail.com
-Users are encouraged to provide valuable feedback in the event of encountering any issues with the application. Your input is instrumental in enhancing the performance and reliability of AsuraSwift.""", no_titlebar=True)
+Feedback: israelshedrack913@gmail.com"""
 
 
-    #updating send changes: opening file path
-    if send:
-        if event == 'key-file':
-            window['key-folder'].update(visible = False)
-            window['key-folder_input'].update(visible = False)
-            file = sg.popup_get_file('Select file', no_window=True)
-            file = file
-            try:
-                file_path = Path(file)
-            except TypeError:
-                continue
-            file_path = file_path.resolve()
-            ready_send = True
-            
-            #cient parameters
-            if dest_folder == "NO":
-                file_name = file_path
-            else:
-                file_path = file.split('/')
-                file_name = file_path[-1]
-                new_path = f"{dest_folder}/{file_name}"
-                file_name = new_path
-            try:
-                file_size = os.path.getsize(file)
-            except FileNotFoundError:
-                continue
-            file_size = str(file_size)
-            conn_message = "Connection Initiated"
-            end_message = "Connection Terminated"
-            window['key-file_input'].update(str(file_name).split('/')[-1])
+def crumb_bar():
+    row = []
+    for i in range(4):
+        if i:
+            row.append(sg.Text("-", font=FONT_CRUMB, text_color=MUTED, pad=((4, 4), 0)))
+        row.append(sg.Text("", font=FONT_CRUMB, text_color=MUTED,
+                           key=f"crumb-{i}", pad=(0, 0)))
+    return row
 
 
-    #folder send changes
-    if event == 'key-folder':
-        conn_message = "Connection Initiated"
-        end_message = "Connection Terminated"
-        window['key-file'].update(visible = False)
-        window['key-file_input'].update(visible = False)
-        folder = sg.popup_get_folder("Select folder", no_window=True)
-        try:
-            folder_list = listdir(folder)
-        except TypeError:
-            continue
-        except FileNotFoundError:
-            continue
-            
-        window['key-dest_input'].update(str(folder.split('/')[-1]))
-        
-        
-                    
-        folder_ready = True
+def build_window():
+    sg.theme(THEME)
 
-    if event == 'key-send' and reverse == False:
-        reverse = True
-        send = True
-        window['key-ip'].update(visible = True)
-        window['key-ip_input'].update(visible = True)
-        window['key-port'].update(visible = True)
-        window['key-port_input'].update(visible = True)
-        window['key-file'].update(visible = True)
-        window['key-file_input'].update(visible = True)
-        window['key-folder'].update(visible = True)
-        window['key-folder_input'].update(visible = True)
-        window['key-recv'].update(visible = False)
+    step_mode = [
+        [sg.Text("What would you like to do?", font=FONT_STEP, pad=(0, (18, 4)))],
+        [sg.Text("Start the receiving computer first.",
+                 font=FONT_SMALL, text_color=MUTED, pad=(0, (0, 22)))],
+        [sg.Button("SEND", key="mode-send", size=(13, 2), font=FONT_BTN,
+                   button_color=("white", "#1F6FEB")),
+         sg.Text("  "),
+         sg.Button("RECEIVE", key="mode-recv", size=(13, 2), font=FONT_BTN,
+                   button_color=("white", "#2C974B"))],
+    ]
 
-        #running external scripts
-        def exec_send_script():
-            send_file(conn_message, str(file_name), end_message, str(value['key-ip_input']), int(value['key-port_input']))
-        
-    if event == 'key-send' and ready_send == True:
-<<<<<<< HEAD
-        # exec_send_script()
-        threading.Thread(target=exec_send_script).start()
-=======
-        exec_send_script()
->>>>>>> origin/master
+    step_device = [
+        [sg.Text("Choose a device", font=FONT_STEP, pad=(0, (14, 2)))],
+        [sg.Text("Nearby computers running AsuraSwift appear here.",
+                 font=FONT_SMALL, text_color=MUTED, pad=(0, (0, 8)))],
+        [sg.Listbox([], size=(44, 7), key="device-list", font=FONT_BODY,
+                    enable_events=True, background_color=FIELD_BG,
+                    text_color=FIELD_FG, no_scrollbar=True,
+                    highlight_background_color=ACCENT,
+                    highlight_text_color="black")],
+        [sg.Text("Searching...", key="device-status", font=FONT_SMALL,
+                 text_color=MUTED, size=(44, 1), pad=(0, (4, 6)))],
+        [sg.Button("Test on this computer", key="device-test",
+                   font=FONT_SMALL, border_width=0),
+         sg.Button("Enter address manually", key="device-manual",
+                   font=FONT_SMALL, border_width=0)],
+    ]
 
-    if event == 'key-send' and folder_ready == True:
+    step_dest = [
+        [sg.Text("Where should files be saved?", font=FONT_STEP, pad=(0, (14, 2)))],
+        [sg.Text("Incoming files are written into this folder.",
+                 font=FONT_SMALL, text_color=MUTED, pad=(0, (0, 12)))],
+        [sg.Input(str(Path.home() / "Downloads"), key="dest-input", size=(34, 1),
+                  font=FONT_BODY, disabled=True, text_color=FIELD_FG,
+                  disabled_readonly_background_color=FIELD_BG,
+                  disabled_readonly_text_color=FIELD_FG),
+         sg.Button("Browse", key="dest-browse", font=FONT_SMALL)],
+        [sg.Text("", key="dest-warn", font=FONT_SMALL, text_color=ERR_RED,
+                 size=(46, 1), pad=(0, (10, 0)))],
+    ]
 
-        #Seperating root folder
-        main_root_folder = folder.split('/')[-1]
+    step_files = [
+        [sg.Text("What do you want to send?", font=FONT_STEP, pad=(0, (14, 2)))],
+        [sg.Text("Add as many files and folders as you like.",
+                 font=FONT_SMALL, text_color=MUTED, pad=(0, (0, 8)))],
+        [sg.Button("Add files", key="files-add", font=FONT_SMALL),
+         sg.Button("Add folder", key="folder-add", font=FONT_SMALL),
+         sg.Button("Remove", key="files-remove", font=FONT_SMALL),
+         sg.Button("Clear", key="files-clear", font=FONT_SMALL)],
+        [sg.Listbox([], size=(44, 6), key="files-list", font=FONT_SMALL,
+                    enable_events=True, background_color=FIELD_BG,
+                    text_color=FIELD_FG, no_scrollbar=True,
+                    highlight_background_color=ACCENT,
+                    highlight_text_color="black")],
+        [sg.Text("Nothing selected", key="files-summary", font=FONT_SMALL,
+                 text_color=MUTED, size=(46, 1))],
+    ]
 
-        #define file_sending_script
-        def exec_send_script2(filename, Folder):
-            client.send_files(conn_message, str(filename), end_message, str(value['key-ip_input']), int(value['key-port_input']), root_folder=main_root_folder, folder = Folder)
-        
-        # #Define dir transfer
-        def Render_root(root_folder):
-            #Render each path to client socket thorough each iteration and create copy starting from the root folder at the destination
-            def Render_folder_paths(folderX, path):
-                new_folder = folderX.split('/')[-1]
-                index = path.find(new_folder)
-                relative_path = path[index + len(new_folder):]
-                final_path = new_folder + relative_path
-                return final_path
-<<<<<<< HEAD
+    step_wait = [
+        [sg.Text("Waiting for a sender...", font=FONT_STEP, pad=(0, (26, 6)))],
+        [sg.Text("This computer is visible to senders on the network.",
+                 font=FONT_SMALL, text_color=MUTED, pad=(0, (0, 16)))],
+        [sg.Text("", key="wait-addr", font=("Helvetica", 15, "bold"),
+                 text_color=ACCENT)],
+        [sg.Text("", key="wait-name", font=FONT_SMALL, text_color=MUTED,
+                 pad=(0, (2, 16)))],
+        [sg.Text("If the sender cannot find this computer, have them enter\n"
+                 "the address above manually.",
+                 font=FONT_SMALL, text_color=MUTED, justification="center")],
+    ]
 
-            def send_folder_paths():
-                sub_paths = Render_folder_paths(root_folder, path)
-                # print(dest_folder)
-                dir = f'{folder}' + '\n' + str(sub_paths)
-                exec_send_script2(dir, Folder="YES")
-                time.sleep(2)
+    step_transfer = [
+        [sg.Text("Transfer", key="xfer-title", font=FONT_STEP, pad=(0, (20, 8)))],
+        [sg.Text("", key="xfer-file", font=FONT_SMALL, text_color=MUTED,
+                 size=(48, 1))],
+        [sg.ProgressBar(1000, orientation="h", size=(38, 22), key="xfer-bar",
+                        bar_color=(ACCENT, "#30363D"), pad=(0, (6, 6)))],
+        [sg.Text("0%", key="xfer-pct", font=FONT_BODY, size=(6, 1)),
+         sg.Text("", key="xfer-rate", font=FONT_SMALL, text_color=MUTED,
+                 size=(38, 1))],
+        [sg.Text("", key="xfer-status", font=FONT_BODY, size=(48, 2),
+                 pad=(0, (12, 0)))],
+    ]
 
-            # def calculate_items_sizes(target_path):
-            #     list_items = os.walk(target_path)
-            #     total_folder = 0
-            #     total_files = 0
-            #     total_size = 0
-            #     filesizes = 0
-            #     for path, folders, filenames in list_items:
-            #         total_folder += len(folders)
-            #         total_files += len(filenames)
-            #         for files in filenames:
-            #             filesizes  = os.path.getsize(f"{path}/{files}")
-            #             total_size += filesizes
-            #     total_size_mb = total_size / (1024 * 1024)
-            #     total_size_gb = total_size / (1024 * 1024 * 1024)
-                
-            #     ren_str = f"{total_folder} folders present" + "\n" + f"{total_files} files present"  + "\n" + f"{total_size_mb:.2f} MB in size" + "\n" + f"{total_size_gb:.2f} GB in size"
-            #     return ren_str                
-                
-            # ren_str = calculate_items_sizes(root_folder)
+    def col(layout, key, visible=False):
+        return sg.Column(layout, key=key, visible=visible,
+                         element_justification="center", pad=(0, 0))
 
-=======
-            def send_folder_paths():
-                sub_paths = Render_folder_paths(root_folder, path)
-                print(dest_folder)
-                dir = f'{folder}' + '\n' + str(sub_paths) + '\n' + str(root_folder).split('/')[-1]
-                exec_send_script2(dir, Folder="YES")
-                time.sleep(2)
+    layout = [
+        [sg.Menu([["Info", ["Help", "About"]]], key="menu",
+                 background_color=FIELD_BG, text_color=FIELD_FG)],
+        [sg.Text("AsuraSwift", font=FONT_TITLE, pad=(0, (10, 2)))],
+        crumb_bar(),
+        [sg.HorizontalSeparator(color=RULE, pad=(0, 10))],
+        [col(step_mode, "step-mode", visible=True),
+         col(step_device, "step-device"),
+         col(step_dest, "step-dest"),
+         col(step_files, "step-files"),
+         col(step_wait, "step-wait"),
+         col(step_transfer, "step-transfer")],
+        [sg.VPush()],
+        [sg.HorizontalSeparator(color=RULE, pad=(0, (10, 8)))],
+        [sg.Button("Back", key="nav-back", font=FONT_BTN, size=(11, 1),
+                   visible=False),
+         sg.Push(),
+         sg.Button("Next", key="nav-next", font=FONT_BTN, size=(12, 1),
+                   visible=False, button_color=("white", "#1F6FEB"))],
+    ]
 
->>>>>>> origin/master
-            dir_list = list(os.walk(root_folder))
-            for path, folders, filenames in dir_list:
-                # Render_send_folder_path
-                for folder in folders:
-                    send_folder_paths()
-                print("All folders sent and created")
-                print("Sending files.")
-                print("Sending files..")
-                print("Sending files...")  
-            time.sleep(1)
-            exec_send_script2('END', Folder= "YES")
+    return sg.Window("AsuraSwift", layout, size=(470, 505), finalize=True,
+                     element_justification="center", margins=(16, 8))
 
-            for path, folders, filenames in dir_list:
-                for files in filenames:
-                    dir_files = f"{path}/{files}"
-                    exec_send_script2(dir_files, Folder = "NO")
-                    time.sleep(1)
-            exec_send_script2('END', Folder= "YES")
-            print("Folders Transmiteed sucessfully")
-        Render_root(folder)
 
-    if event == "key-dest_btn":  
-        window['key-dest'].update(visible = True)
-        window['key-dest_input'].update(visible = True)
-        window['key-dest_btn'].update(visible = False)
+class Progress:
+    """Rate-limits transport callbacks into GUI events and tracks speed/ETA."""
 
-      #updating recv changes
-    if event == 'key-recv' and reverse == False:
-        reverse = True
-        window['key-ip'].update(visible = True)
-        window['key-ip_input'].update(visible = True)
-        window['key-port'].update(visible = True)
-        window['key-port_input'].update(visible = True)
-        # window['key-port_input'].update(visible = True)
-        window['key-buffer'].update(visible = True)
-        window['key-buffer_input'].update(visible = True)
-        window['key-ready'].update(visible = True)
-        window['key-send'].update(visible = False)
-        window['key-dest_btn'].update(visible = True)
-        window['key-recv'].update(visible = False)
-        window['key-recv_file'].update(visible = True)
-        window['key-recv_folder'].update(visible = True)
-        recv = True
-    
-    if event == 'key-dest':
-        dest_folder = sg.popup_get_folder('Select Destination Folder', no_window=True)
-        window['key-dest_input'].update(dest_folder)
+    def __init__(self, window, interval=0.12):
+        self.window = window
+        self.interval = interval
+        self.start = time.time()
+        self.last = 0.0
 
-    #updating buffer value along with server parameters
-    if event == 'key-ready' and reverse == True:
-        match value['key-buffer_input']:
-            case '2mb/s': 
-                buffer = 2000000
-                window['key-buffer_input'].update(disabled = True)
-            case '4mb/s': 
-                buffer = 4000000
-                window['key-buffer_input'].update(disabled = True)
-            case '6mb/s': 
-                buffer = 6000000
-                window['key-buffer_input'].update(disabled = True)
-            case 'custom':
-                # sg.popup("Warning: setting buffer higher than \n 60000 might lead to unintended \n consequences")
-                value = sg.PopupGetText('Warning: setting buffer higher than \n 60000 might lead to unintended \n consequences')
-                window['key-buffer_input'].update(int(value))
-                buffer = value
-        try:
-            ip_addr = value['key-ip_input']
-            port = value['key-port_input']
-        except TypeError:
-            continue
+    def __call__(self, done, total, name):
+        now = time.time()
+        if now - self.last < self.interval and done != total:
+            return
+        self.last = now
+        elapsed = max(now - self.start, 1e-6)
+        rate = done / elapsed
+        eta = (total - done) / rate if rate > 0 and total else 0
+        self.window.write_event_value("-PROGRESS-", (done, total, name, rate, eta))
 
-    if event == 'key-ready':
-        ready_recv = True
-        window['key-ready'].update(button_color = 'green')
 
-        #creating server functions for destinations
-        def exec_recv_script():
-            return recv_file(int(buffer), str(ip_addr), int(port), location = dest_folder)
+def main():
+    window = build_window()
+    state = {
+        "mode": None,      # 'send' | 'recv'
+        "step": 0,
+        "browser": None,
+        "beacon": None,
+        "peers": [],
+        "peer": None,
+        "self_peer": None,   # this machine, added on demand for same-PC testing
+        "paths": [],
+        "busy": False,
+    }
+    cancel = threading.Event()
 
-        def exec_recv_script2(folder, destination):
-             report = server.recv_file(int(buffer), str(ip_addr), int(port), locate_folder=destination)
-             return report
+    def set_crumbs():
+        labels = CRUMBS.get(state["mode"], CRUMBS["send"])
+        for i, label in enumerate(labels):
+            window[f"crumb-{i}"].update(
+                f"{NUMERALS[i]} {label}",
+                text_color=ACCENT if i == state["step"] else MUTED)
 
-        def exec_recv_script3(destination):
-             report = server.recv_file1(int(buffer), str(ip_addr), int(port), locate_folder=destination)
-             return report
+    def show(panel):
+        for key in ("step-mode", "step-device", "step-dest", "step-files",
+                    "step-wait", "step-transfer"):
+            window[key].update(visible=(key == panel))
 
-    #executing recv scripts
-    if event == 'key-recv_folder' and ready_recv:
-        sg.popup("Please ensure that you are \n actually receiving a folder before \n clicking this button")
-<<<<<<< HEAD
-        def thread1():
-            running = True
-            while running:
-                print("Script 2 executing")
-                running = exec_recv_script2(folder = 'YES', destination=dest_folder)
-            time.sleep(1)
-            running = True
-            while running:
-                print("Script 3 executing")
-                running = exec_recv_script3(destination=dest_folder)
-                time.sleep(0.3)
-            print("Files Received sucessfully") 
-            
-        threading.Thread(target = thread1).start()
-=======
-        while running:
-            print("Script 2 executing")
-            running = exec_recv_script2(folder = 'YES', destination=dest_folder)
-        time.sleep(1.5)
-        running = True
-        while running:
-            print("Script 3 executing")
-            running = exec_recv_script3(destination=dest_folder)
-        print("Files Received sucessfully")
->>>>>>> origin/master
-        window['key-ready'].update(button_color = 'Red')
-    
-    if event == 'key-recv_file' and ready_recv:
-        sg.popup("Please ensure that you are \n actually receiving a file before \n clicking this button")
-<<<<<<< HEAD
-        threading.Thread(target = exec_recv_script).start()
-=======
-        exec_recv_script()
->>>>>>> origin/master
-        window['key-ready'].update(button_color = 'Red')
+    def stop_browser():
+        if state["browser"]:
+            state["browser"].stop()
+            state["browser"] = None
 
-    #Affirming ip_value
-    ip_value = value['key-ip_input']
-    if event == 'key-ready':
-        if ip_value[0:10] == '192.168.43' or ip_value[0:9] == '127.0.1.1':
-            ready_recv = True
-            ready_send = True
+    def stop_beacon():
+        if state["beacon"]:
+            state["beacon"].stop()
+            state["beacon"] = None
+
+    def shorten(path, width=52):
+        return path if len(path) <= width else "..." + path[-(width - 3):]
+
+    def refresh_devices(keep_selection=True):
+        """Redraw the device list: this computer first if added, then the network."""
+        found = state["browser"].peers() if state["browser"] else []
+        if state["self_peer"]:
+            # A beacon from our own address is filtered out by discovery, so the
+            # self entry never arrives over the network -- it is added here.
+            found = [state["self_peer"]] + [p for p in found
+                                            if p["ip"] != state["self_peer"]["ip"]]
+        state["peers"] = found
+        window["device-list"].update(
+            [f"{p['name']}    {p['ip']}" for p in found])
+
+        if state["peer"] and keep_selection:
+            for i, p in enumerate(found):
+                if p["ip"] == state["peer"]["ip"]:
+                    window["device-list"].update(set_to_index=[i])
+                    break
+
+        network = [p for p in found if p is not state["self_peer"]]
+        if network:
+            window["device-status"].update(f"{len(network)} device(s) found",
+                                           text_color=OK_GREEN)
+        elif state["self_peer"]:
+            window["device-status"].update("Testing on this computer",
+                                           text_color=ACCENT)
         else:
-            ready_recv = False
-            ready_send = False
-    
-    #restarting window
-    if event == 'key-image':
-        window.close()
-        theme = choice(['DarkPurple6', 'TanBlue', 'DarkGreen', 'BlueMono', 'DarkBlue17', 'DarkBlue3', 'lightGreen'])
-        window = create_window(theme)
-        reverse = False
-        send = False
-        recv = False
-        ready_send = False
-        ready_recv = False
+            window["device-status"].update("Searching...", text_color=MUTED)
+
+    def refresh_files():
+        paths = state["paths"]
+        window["files-list"].update([shorten(p) for p in paths])
+        if not paths:
+            window["files-summary"].update("Nothing selected", text_color=MUTED)
+            window["nav-next"].update("Send", disabled=True)
+            return
+        try:
+            _, files, total = build_manifest(paths)
+        except OSError as exc:
+            window["files-summary"].update(f"Cannot read selection: {exc}",
+                                           text_color=ERR_RED)
+            window["nav-next"].update("Send", disabled=True)
+            return
+        window["files-summary"].update(
+            f"{len(files)} file(s) - {human_bytes(total)}", text_color=ACCENT)
+        window["nav-next"].update("Send", disabled=(len(files) == 0))
+
+    def start_send():
+        state["busy"] = True
+        cancel.clear()
+        peer = state["peer"]
+        window["xfer-title"].update(f"Sending to {peer['name']}")
+        window["xfer-status"].update("", text_color=sg.theme_text_color())
+        report = Progress(window)
+
+        def work():
+            try:
+                count, sent = client.send_session(
+                    peer["ip"], peer["port"], list(state["paths"]),
+                    on_progress=report,
+                    on_status=lambda m: window.write_event_value("-STATUS-", m),
+                    cancel=cancel)
+                window.write_event_value("-DONE-", (count, sent))
+            except Exception as exc:
+                window.write_event_value("-ERROR-", str(exc))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def start_receive():
+        state["busy"] = True
+        cancel.clear()
+        dest = window["dest-input"].get()
+        state["beacon"] = discovery.Beacon(port=DEFAULT_PORT)
+        state["beacon"].start()
+        report = Progress(window)
+
+        def work():
+            listener = None
+            try:
+                listener = server.listen(DEFAULT_PORT)
+                count, got = server.receive_session(
+                    dest, server=listener,
+                    on_progress=report,
+                    on_status=lambda m: window.write_event_value("-STATUS-", m),
+                    on_peer=lambda ip: window.write_event_value("-PEER-", ip),
+                    cancel=cancel)
+                window.write_event_value("-DONE-", (count, got))
+            except Exception as exc:
+                window.write_event_value("-ERROR-", str(exc))
+            finally:
+                if listener:
+                    listener.close()
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def goto(new_step):
+        state["step"] = new_step
+        set_crumbs()
+
+        if new_step == 0:
+            stop_browser()
+            stop_beacon()
+            show("step-mode")
+            window["nav-back"].update(visible=False)
+            window["nav-next"].update(visible=False)
+            return
+
+        window["nav-back"].update(visible=True, disabled=False)
+        window["nav-next"].update(visible=True)
+
+        if state["mode"] == "send":
+            if new_step == 1:
+                show("step-device")
+                if state["browser"] is None:
+                    state["browser"] = discovery.Browser()
+                    state["browser"].start()
+                refresh_devices()
+                window["nav-next"].update("Next", disabled=(state["peer"] is None))
+            elif new_step == 2:
+                stop_browser()
+                show("step-files")
+                refresh_files()
+            elif new_step == 3:
+                show("step-transfer")
+                window["nav-next"].update(visible=False)
+                window["nav-back"].update(disabled=True)
+                start_send()
+        else:
+            if new_step == 1:
+                stop_beacon()
+                show("step-dest")
+                window["nav-next"].update("Next", disabled=False)
+            elif new_step == 2:
+                show("step-wait")
+                window["wait-addr"].update(f"{discovery.local_ip()}:{DEFAULT_PORT}")
+                window["wait-name"].update(socket.gethostname())
+                window["nav-next"].update(visible=False)
+                start_receive()
+            elif new_step == 3:
+                show("step-transfer")
+                window["nav-next"].update(visible=False)
+                window["nav-back"].update(disabled=True)
+
+    def finish(text, color):
+        state["busy"] = False
+        stop_beacon()
+        window["xfer-status"].update(text, text_color=color)
+        window["xfer-file"].update("")
+        window["nav-back"].update(visible=True, disabled=False, text="Start over")
+
+    goto(0)
+
+    while True:
+        event, value = window.read(timeout=400)
+
+        if event in (sg.WINDOW_CLOSED, None):
+            break
+
+        if event == "Help":
+            sg.popup_scrolled(HELP_TEXT, title="Help", size=(60, 24), font=FONT_BODY)
+        elif event == "About":
+            sg.popup(ABOUT_TEXT, title="About", font=FONT_BODY)
+
+        elif event == "mode-send":
+            state["mode"] = "send"
+            state["peer"] = None
+            state["self_peer"] = None
+            state["paths"].clear()
+            goto(1)
+        elif event == "mode-recv":
+            state["mode"] = "recv"
+            goto(1)
+
+        elif event == "device-list":
+            idxs = window["device-list"].get_indexes()
+            if idxs and idxs[0] < len(state["peers"]):
+                state["peer"] = state["peers"][idxs[0]]
+                window["nav-next"].update(disabled=False)
+        elif event == "device-test":
+            # local_ip() already falls back to loopback if no LAN interface is up
+            state["self_peer"] = {"name": "This computer (test)",
+                                  "ip": discovery.local_ip(),
+                                  "port": DEFAULT_PORT}
+            state["peer"] = state["self_peer"]
+            refresh_devices()
+            window["nav-next"].update(disabled=False)
+        elif event == "device-manual":
+            entered = sg.popup_get_text(
+                "Address shown on the receiving computer\n(for example 10.106.251.88)",
+                title="Enter address", font=FONT_BODY)
+            if entered:
+                host, _, port_txt = entered.strip().partition(":")
+                try:
+                    port = int(port_txt) if port_txt else DEFAULT_PORT
+                except ValueError:
+                    sg.popup_error("That port is not a number.", font=FONT_BODY)
+                else:
+                    state["peer"] = {"name": host, "ip": host, "port": port}
+                    window["device-status"].update(f"Using {host}", text_color=ACCENT)
+                    window["nav-next"].update(disabled=False)
+
+        elif event == "dest-browse":
+            chosen = filepicker.pick_folder("Save received files into")
+            if chosen:
+                window["dest-input"].update(chosen)
+                window["dest-warn"].update("")
+
+        elif event == "files-add":
+            picked = filepicker.pick_files("Select files to send")
+            if picked:
+                state["paths"].extend(picked)
+                refresh_files()
+        elif event == "folder-add":
+            picked = filepicker.pick_folder("Select folder to send")
+            if picked:
+                state["paths"].append(picked)
+                refresh_files()
+        elif event == "files-remove":
+            for i in sorted(window["files-list"].get_indexes(), reverse=True):
+                if i < len(state["paths"]):
+                    state["paths"].pop(i)
+            refresh_files()
+        elif event == "files-clear":
+            state["paths"].clear()
+            refresh_files()
+
+        elif event == "nav-next":
+            if state["mode"] == "recv" and state["step"] == 1:
+                dest = window["dest-input"].get()
+                try:
+                    os.makedirs(dest, exist_ok=True)
+                except OSError as exc:
+                    window["dest-warn"].update(f"Cannot use that folder: {exc}")
+                    continue
+                if not os.access(dest, os.W_OK):
+                    window["dest-warn"].update("That folder is not writable.")
+                    continue
+            goto(state["step"] + 1)
+        elif event == "nav-back":
+            if state["busy"] or state["step"] >= 3:
+                cancel.set()
+                state["busy"] = False
+                window["nav-back"].update(text="Back")
+                window["xfer-bar"].update(0)
+                window["xfer-pct"].update("0%")
+                window["xfer-rate"].update("")
+                window["xfer-status"].update("")
+                state["mode"] = None
+                goto(0)
+            else:
+                goto(state["step"] - 1)
+
+        elif event == "-PROGRESS-":
+            done, total, name, rate, eta = value[event]
+            if state["step"] == 2:
+                goto(3)
+            frac = (done / total) if total else 0
+            window["xfer-bar"].update(int(frac * 1000))
+            window["xfer-pct"].update(f"{frac * 100:.0f}%")
+            window["xfer-rate"].update(
+                f"{human_bytes(rate)}/s - {human_time(eta)} left - "
+                f"{human_bytes(done)} of {human_bytes(total)}")
+            if name:
+                window["xfer-file"].update(shorten(name))
+        elif event == "-STATUS-":
+            window["xfer-status"].update(value[event],
+                                         text_color=sg.theme_text_color())
+        elif event == "-PEER-":
+            window["xfer-title"].update(f"Receiving from {value[event]}")
+            if state["step"] == 2:
+                goto(3)
+        elif event == "-DONE-":
+            count, moved = value[event]
+            verb = "Sent" if state["mode"] == "send" else "Received"
+            finish(f"{verb} {count} file(s) - {human_bytes(moved)}", OK_GREEN)
+        elif event == "-ERROR-":
+            finish(f"Transfer failed:\n{value[event]}", ERR_RED)
+
+        if (event == sg.TIMEOUT_KEY and state["mode"] == "send"
+                and state["step"] == 1 and state["browser"]):
+            refresh_devices()
+
+    cancel.set()
+    stop_browser()
+    stop_beacon()
+    window.close()
 
 
-
-
-window.close()
+if __name__ == "__main__":
+    main()

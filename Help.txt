@@ -1,20 +1,25 @@
-AsuraSwift 1.0 User Guide
+AsuraSwift - User Guide
 
-For the Sender:
+Both computers must be on the same network. A phone hotspot works well:
+have both machines join it. No internet or mobile data is used - the files
+travel directly between the two computers.
 
-Ensure a third device (e.g., phone with a hotspot) is available.
-Both computers connect to the same hotspot.
-In the app, set the IP address and port on both computers to match the hotspot's values.
-The IP address and port should be that of the device creating the hotspot.
-Select the file to send and initiate the transfer.
-Note: Receiver must click "Receive" before the sender clicks "send"
+To receive:
+  1. Click RECEIVE.
+  2. Choose the folder to save into.
+  3. Wait. Your computer announces itself on the network automatically,
+     and shows its address in case it is needed.
 
-For the Receiver:
+To send:
+  1. Click SEND.
+  2. Pick the receiving computer from the list. It appears on its own -
+     there is no address, port or speed to type in. Start the receiver first.
+  3. Choose any mix of files and folders, then press Send.
 
-Set the IP address and port to match the sender's values.
-Optionally adjust the speed (buffer) for large files, but avoid unnecessary increases.
-Click "Ready" and wait for the color indicator to turn green.
-The sender can now press "Send" to initiate the transfer.
-Note: Avoid excessive speed increases to prevent system glitches.
+Folders keep their structure: subfolders and empty folders are recreated
+exactly as they were at the destination.
 
-This guide facilitates seamless file transfer without relying on internet or data connections.
+If the device list stays empty, the network is probably blocking device
+discovery (some public Wi-Fi and hotspots isolate clients from each other).
+Use "Enter address manually" on the sender and type the address shown on
+the receiving computer's waiting screen.

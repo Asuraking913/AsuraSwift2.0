@@ -1,125 +1,113 @@
-from fileinput import filename
-import socket
+"""Receiving end of an AsuraSwift transfer.
+
+The listener binds once with SO_REUSEADDR and keeps the accepted connection for
+the whole session, so there is no longer a window between messages where the
+sender can connect into a dying backlog and lose data silently.
+
+Binding to 0.0.0.0 means the machine's own address never has to be typed or
+guessed -- it accepts on whichever interface the peer can actually reach.
+"""
 import os
-import time 
-import tqdm 
-<<<<<<< HEAD
-import PySimpleGUI as sg
-import threading
-=======
->>>>>>> origin/master
+import socket
 
-def recv_file(buffer, host, port, locate_folder = "NO"):
-    
-    #socket object
+from protocol import (CHUNK, MAGIC, DEFAULT_PORT, recv_exactly, recv_header,
+                      safe_join, send_header)
+
+
+def listen(port=DEFAULT_PORT, host="", backlog=1):
+    """Open a listening socket on every interface.
+
+    SO_REUSEADDR matters: without it a rebind while a previous connection sits
+    in TIME_WAIT fails, and the old code swallowed that error and then let
+    listen() pick a random port nobody was dialling.
+    """
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    response = "Received_handshake"
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind((host, port))
+    server.listen(backlog)
+    return server
 
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/master
+def receive_session(dest, server=None, port=DEFAULT_PORT, on_progress=None,
+                    on_status=None, on_peer=None, cancel=None, timeout=None):
+    """Accept one transfer and write it beneath `dest`.
+
+    Pass an existing `server` socket to reuse a listener across transfers.
+    on_progress(received_bytes, total_bytes, current_name) reports movement.
+    Returns (files_received, bytes_received).
+    """
+    owns_server = server is None
+    if owns_server:
+        server = listen(port)
+    if timeout is not None:
+        server.settimeout(timeout)
+
+    if on_status:
+        on_status("Waiting for a sender…")
+
+    conn, addr = server.accept()
+    conn.settimeout(60.0)
+    received = 0
+    count = 0
     try:
-        server.bind((host, port))
-    except Exception as e:
-        pass
-    server.listen()
-    
-    client, addr = server.accept()
+        if on_peer:
+            on_peer(addr[0])
+        if on_status:
+            on_status(f"Connected to {addr[0]}")
 
-    #hanshake
-    handshake = client.recv(10).decode()
-    print(handshake)
-    # client.send(f"Received_handshakes".encode())
+        if recv_exactly(conn, len(MAGIC)) != MAGIC:
+            raise ConnectionError("peer is not speaking the AsuraSwift protocol")
 
-    def recv_folder_path():
-        gen_message1 = client.recv(1024).decode()
-        if gen_message1 == "END":
-            print("Transmission terminated")
-            return False
-        else:
-            gen_message = gen_message1.split('\n')
-            folder = gen_message[0]
-            sub_paths = gen_message[1]
-            root_folder = gen_message[-1]
-            if locate_folder == "NO":
-                os.makedirs(f'{root_folder}', exist_ok=True)
-                os.makedirs(f'{sub_paths}/{folder}', exist_ok= True)
-                print(f'Created new_dir:{sub_paths}/{folder}')
-            else:
-                os.makedirs(f'{locate_folder}/{root_folder}', exist_ok=True)
-                os.makedirs(f'{locate_folder}/{sub_paths}/{folder}', exist_ok= True)
-                print(f'Created new_dir:{locate_folder}/{sub_paths}/{folder}')
-                time.sleep(1)
-            return True
+        manifest = recv_header(conn)
+        if manifest.get("type") != "manifest":
+            raise ConnectionError(f"expected a manifest, got {manifest}")
 
-    report = recv_folder_path()
-    return report
+        total = int(manifest.get("total_bytes", 0))
+        expected = int(manifest.get("total_files", 0))
 
-def recv_file1(buffer, host, port, locate_folder = "NO"):
-    
-    #socket object
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    response = "Received_handshake"
+        # Build the whole tree up front. No round trip per folder, so no race.
+        os.makedirs(dest, exist_ok=True)
+        for rel in manifest.get("dirs", []):
+            os.makedirs(safe_join(dest, rel), exist_ok=True)
 
-    try:
-        server.bind((host, port))
-    except Exception as e:
-        pass
-    server.listen()
-    
-    client, addr = server.accept()
+        send_header(conn, {"type": "ready"})
+        if on_status:
+            on_status(f"Receiving {expected} file(s)…")
+        if on_progress:
+            on_progress(0, total, "")
 
-    #hanshake
-    handshake = client.recv(10).decode()
-    print(handshake)
-    # client.send(f"Received_handshakes".encode())    
+        while True:
+            if cancel is not None and cancel.is_set():
+                raise InterruptedError("transfer cancelled")
 
-    gen_message1 = client.recv(1024).decode()
-    if gen_message1 == "END":
-        return False
-    else:
-        gen_message = gen_message1.split('\n')
-        conn_message = gen_message[0]
-        file_name = gen_message[1]
-        file_name1 = file_name.split('/')[-1]
-        # file_name1 = f'Received_{file_name1}'
-        file_size = gen_message[2]
-        end_message = gen_message[3]
-        root_folder = gen_message[4]
+            header = recv_header(conn)
+            kind = header.get("type")
 
-        print(conn_message)
-        print(file_size)
+            if kind == "done":
+                send_header(conn, {"type": "complete", "files": count})
+                break
+            if kind == "abort":
+                raise InterruptedError("sender cancelled the transfer")
+            if kind != "file":
+                raise ConnectionError(f"unexpected message: {header}")
 
-        global progress
+            target = safe_join(dest, header["path"])
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            remaining = int(header["size"])
+            with open(target, "wb") as handle:
+                while remaining:
+                    block = recv_exactly(conn, min(CHUNK, remaining))
+                    handle.write(block)
+                    remaining -= len(block)
+                    received += len(block)
+                    if on_progress:
+                        on_progress(received, total, header["path"])
+            count += 1
+    finally:
+        conn.close()
+        if owns_server:
+            server.close()
 
-        progress = tqdm.tqdm(unit = "MB", unit_scale = True, unit_divisor = 1024, 
-                                total = int(file_size))
-                
-        done = False
-
-        str1 = file_name
-        str2 = root_folder
-        index = str1.find(str2)
-        relative_path = str1[index + len(str2):]
-        final_path = str2 + relative_path
-
-        with open(f"{locate_folder}/{final_path}", 'wb') as file:
-            while not done:
-                data = client.recv(buffer)
-                if data:
-                    file.write(data)
-                else:
-                    done = True
-                progress.update(len(data))
-
-        # while not done:
-        #     data = client.recv(buffer)
-        #     if data:
-        #         file.write(data)
-        #         progress.update(len(data))
-        #     else:
-        #         done = True
-        print(f"Created {file_name1} at {locate_folder}/{final_path}")
-        print(end_message)
-        return True
+    if on_status:
+        on_status(f"Received {count} file(s).")
+    return count, received
